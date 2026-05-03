@@ -318,8 +318,7 @@ export default function App() {
         <div style={{ maxWidth:1120, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", height: mobile ? 60 : 68 }}>
           {/* Logo */}
           <div onClick={()=>go("home")} style={{ cursor:"pointer", display:"flex", alignItems:"baseline", gap:10, flexShrink:0 }}>
-            <span className="pf" style={{ fontSize: mobile ? 17 : 19, fontWeight:700, color:C.navy, letterSpacing:".01em" }}>John Thornton</span>
-            {!mobile && <span className="ss" style={{ fontSize:9.5, color:C.gold, letterSpacing:".2em", textTransform:"uppercase", fontWeight:700 }}>Unsecured</span>}
+            <span className="pf" style={{ fontSize: mobile ? 17 : 19, fontWeight:700, color:C.navy, letterSpacing:".01em" }}>Unsecured</span>
           </div>
 
           {/* Desktop nav */}
