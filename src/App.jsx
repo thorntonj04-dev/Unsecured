@@ -386,7 +386,7 @@ export default function App() {
               <div>
                 <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",color:C.gold,marginBottom:16 }}>The Book</p>
                 <p className="lb" style={{ fontSize:14,color:C.g400,lineHeight:1.7,fontStyle:"italic",marginBottom:20 }}>Unsecured: Why Pressure Isn't the Problem</p>
-                <button className="btn-oc" style={{ fontSize:10.5 }}>Get the Book</button>
+                <a href="https://a.co/d/0dpaVYPc" target="_blank" rel="noopener noreferrer" className="btn-oc" style={{ fontSize:10.5, textDecoration:"none" }}>Get the Book</a>
               </div>
             </div>
             <div style={{ width:"100%",height:1,background:`linear-gradient(to right, transparent, ${C.navyMid}, transparent)`,marginBottom:24 }}/>
@@ -672,7 +672,7 @@ function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
               "The problem may not be how much pressure you carry. It may be how your system was configured to carry it."
             </p>
             <div style={{ display:"flex", gap:12, flexDirection: mobile ? "column" : "row" }}>
-              <button className="btn-d mob-full" style={{ textAlign:"center" }}>Get the Book</button>
+              <a href="https://a.co/d/0dpaVYPc" target="_blank" rel="noopener noreferrer" className="btn-d mob-full" style={{ textAlign:"center", textDecoration:"none" }}>Get the Book</a>
               <button className="btn-o mob-full" style={{ textAlign:"center" }} onClick={()=>go("thinking")}>Explore the Writing</button>
             </div>
           </Reveal>
@@ -767,7 +767,7 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
                 <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",color:C.gold,marginBottom:12 }}>The Book</p>
                 <p className="lb" style={{ fontSize:15,fontStyle:"italic",color:C.navy,marginBottom:10,lineHeight:1.4 }}>Unsecured: Why Pressure Isn't the Problem</p>
                 <p className="ss" style={{ fontSize:13,color:C.g600,marginBottom:18 }}>Where all of this thinking started.</p>
-                <button className="btn-d" style={{ width:"100%" }}>Get the Book</button>
+                <a href="https://a.co/d/0dpaVYPc" target="_blank" rel="noopener noreferrer" className="btn-d" style={{ width:"100%", textDecoration:"none", display:"block", textAlign:"center" }}>Get the Book</a>
               </div>
             </div>
           </Reveal>
@@ -831,7 +831,7 @@ function EssayPage({ essay, all, setEssay, scrollY, mobile, px }) {
             <div>
               <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",color:C.gold,marginBottom:10 }}>In the Book</p>
               <p className="ss" style={{ fontSize:14,lineHeight:1.85,color:C.g600,marginBottom:18 }}>{essay.bookTie}</p>
-              <button className="btn-d" style={{ fontSize:10.5 }}>Get Unsecured</button>
+              <a href="https://a.co/d/0dpaVYPc" target="_blank" rel="noopener noreferrer" className="btn-d" style={{ fontSize:10.5, textDecoration:"none" }}>Get Unsecured</a>
             </div>
           </div>
         </Reveal>
