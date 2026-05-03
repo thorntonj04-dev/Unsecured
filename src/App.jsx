@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { LOCAL_ESSAYS } from "./essays";
 import { fetchEssays } from "./firebase";
-import AdminPage from "./AdminPage";
 
 // ─── TOKENS ───────────────────────────────────────────────────────────────────
 const C = {
@@ -231,9 +230,6 @@ function EmailCapture({ compact = false }) {
 // APP ROOT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  // Render admin panel when URL hash is #admin
-  if (window.location.hash === "#admin") return <AdminPage />;
-
   const [page, setPage] = useState("home");
   const [essay, setEssay] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
