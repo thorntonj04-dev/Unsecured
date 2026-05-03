@@ -14,6 +14,7 @@ import { initializeApp, getApps } from "firebase/app";
 import {
   getFirestore, collection, getDocs, doc,
   setDoc, deleteDoc, query, orderBy, where,
+  addDoc, serverTimestamp,
 } from "firebase/firestore";
 import {
   getAuth, signInWithEmailAndPassword,
@@ -136,6 +137,46 @@ export function onAuthChange(callback) {
   const auth = getAuthInstance();
   if (!auth) { callback(null); return () => {}; }
   return onAuthStateChanged(auth, callback);
+}
+
+// ── SAVE AUDIT RESULT ─────────────────────────────────────────────────────────
+export async function saveAuditResult({ email, name, scores, profile }) {
+  const db = getDB();
+  if (!db) return;
+  await addDoc(collection(db, "audits"), {
+    email, name: name || "", scores, profile,
+    timestamp: serverTimestamp(),
+  });
+}
+
+// ── ADD TO WAITLIST ───────────────────────────────────────────────────────────
+export async function addToWaitlist({ name, email }) {
+  const db = getDB();
+  if (!db) return;
+  await addDoc(collection(db, "waitlist"), {
+    name: name || "", email,
+    timestamp: serverTimestamp(),
+  });
+}
+
+// ── SUBMIT CORPORATE INQUIRY ──────────────────────────────────────────────────
+export async function submitInquiry({ name, email, organization, role, teamSize, interests, message }) {
+  const db = getDB();
+  if (!db) return;
+  await addDoc(collection(db, "inquiries"), {
+    name, email, organization: organization || "", role: role || "",
+    teamSize: teamSize || "", interests: interests || [],
+    message: message || "", timestamp: serverTimestamp(),
+  });
+}
+
+// ── FETCH ADMIN COLLECTION ────────────────────────────────────────────────────
+export async function fetchAdminCollection(name) {
+  const db = getDB();
+  if (!db) return [];
+  const q = query(collection(db, name), orderBy("timestamp", "desc"));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 export { LOCAL_ESSAYS };

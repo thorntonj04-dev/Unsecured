@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   signIn, signOut, onAuthChange,
   fetchAllEssays, saveEssay, deleteEssay,
+  fetchAdminCollection,
 } from "./firebase";
 
 // ─── TOKENS (mirrors App.jsx) ─────────────────────────────────────────────────
@@ -286,21 +287,50 @@ function Field({ label, note, required, children }) {
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────────────────────
 function Dashboard({ onSignOut }) {
+  const [activeTab, setActiveTab] = useState("essays"); // 'essays' | 'audits' | 'waitlist' | 'inquiries'
   const [essays, setEssays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null); // essay object or BLANK_ESSAY
+  const [editing, setEditing] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [filter, setFilter] = useState("All");
   const [toast, setToast] = useState("");
 
-  useEffect(() => { load(); }, []);
+  // Collection tabs state
+  const [audits, setAudits] = useState([]);
+  const [waitlist, setWaitlist] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
 
-  async function load() {
+  useEffect(() => { loadEssays(); }, []);
+
+  async function loadEssays() {
     setLoading(true);
     const data = await fetchAllEssays();
     setEssays(data);
     setLoading(false);
+  }
+
+  async function loadCollection(name) {
+    setCollectionLoading(true);
+    try {
+      const data = await fetchAdminCollection(name);
+      if (name === "audits") setAudits(data);
+      else if (name === "waitlist") setWaitlist(data);
+      else if (name === "inquiries") setInquiries(data);
+    } catch (err) {
+      showToast(`Failed to load ${name}: ${err.message}`);
+    } finally {
+      setCollectionLoading(false);
+    }
+  }
+
+  function handleTabChange(tab) {
+    setActiveTab(tab);
+    setEditing(null);
+    if (tab === "audits" && audits.length === 0) loadCollection("audits");
+    if (tab === "waitlist" && waitlist.length === 0) loadCollection("waitlist");
+    if (tab === "inquiries" && inquiries.length === 0) loadCollection("inquiries");
   }
 
   function showToast(msg) {
@@ -334,29 +364,63 @@ function Dashboard({ onSignOut }) {
     }
   }
 
+  function formatTS(ts) {
+    if (!ts) return "—";
+    if (ts.toDate) return ts.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return String(ts);
+  }
+
   const displayed = filter === "All" ? essays : essays.filter(e => e.theme === filter);
+
+  const tabStyle = (t) => ({
+    fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700,
+    letterSpacing: ".12em", textTransform: "uppercase", padding: "12px 20px",
+    background: "transparent", color: activeTab === t ? C.cream : "rgba(244,239,230,.4)",
+    border: "none", borderBottom: `2px solid ${activeTab === t ? C.gold : "transparent"}`,
+    cursor: "pointer", transition: "all .2s", whiteSpace: "nowrap",
+  });
+
+  const thStyle = {
+    fontFamily: "'Source Sans 3',sans-serif", fontSize: 10, fontWeight: 700,
+    letterSpacing: ".12em", textTransform: "uppercase", color: C.g400,
+    padding: "10px 16px", textAlign: "left", borderBottom: `1px solid ${C.g200}`,
+    background: C.g100,
+  };
+
+  const tdStyle = {
+    fontFamily: "'Source Sans 3',sans-serif", fontSize: 13, color: C.g800,
+    padding: "14px 16px", borderBottom: `1px solid ${C.g200}`, verticalAlign: "top",
+    lineHeight: 1.5,
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: C.g100 }}>
 
       {/* ── Header ── */}
       <div style={{ background: C.navy, padding: "0 32px", borderBottom: `1px solid ${C.navyLight}` }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center",
-          justifyContent: "space-between", height: 64 }}>
-          <div>
-            <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700,
-              color: C.cream, marginRight: 16 }}>Admin Panel</span>
-            <span style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 10, fontWeight: 700,
-              letterSpacing: ".18em", textTransform: "uppercase", color: C.gold }}>Unsecured Platform</span>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+            <div>
+              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700,
+                color: C.cream, marginRight: 16 }}>Admin Panel</span>
+              <span style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 10, fontWeight: 700,
+                letterSpacing: ".18em", textTransform: "uppercase", color: C.gold }}>Unsecured Platform</span>
+            </div>
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <span style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: C.g400 }}>
+                {essays.length} essays
+              </span>
+              <button onClick={onSignOut} style={{ ...outlineBtn, borderColor: "rgba(244,239,230,.2)",
+                color: "rgba(244,239,230,.6)", padding: "8px 16px" }}>
+                Sign Out
+              </button>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <span style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: C.g400 }}>
-              {essays.length} essays
-            </span>
-            <button onClick={onSignOut} style={{ ...outlineBtn, borderColor: "rgba(244,239,230,.2)",
-              color: "rgba(244,239,230,.6)", padding: "8px 16px" }}>
-              Sign Out
-            </button>
+          {/* Tab bar */}
+          <div style={{ display: "flex", gap: 0, overflowX: "auto", scrollbarWidth: "none" }}>
+            {[["Essays","essays"],["Audits","audits"],["Waitlist","waitlist"],["Inquiries","inquiries"]].map(([label, t]) => (
+              <button key={t} onClick={() => handleTabChange(t)} style={tabStyle(t)}>{label}</button>
+            ))}
           </div>
         </div>
       </div>
@@ -397,65 +461,203 @@ function Dashboard({ onSignOut }) {
       {/* ── Main content ── */}
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 32px" }}>
 
-        {/* New essay button + filter */}
-        {!editing && (
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-            marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["All", ...THEMES].map(t => (
-                <button key={t} onClick={() => setFilter(t)} style={{
-                  fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700,
-                  letterSpacing: ".1em", textTransform: "uppercase", padding: "7px 14px",
-                  background: filter === t ? C.navy : "white",
-                  color: filter === t ? C.cream : C.g600,
-                  border: `1px solid ${filter === t ? C.navy : C.g200}`,
-                  cursor: "pointer", transition: "all .2s",
-                }}>
-                  {t}
+        {/* ── ESSAYS TAB ── */}
+        {activeTab === "essays" && (
+          <>
+            {!editing && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {["All", ...THEMES].map(t => (
+                    <button key={t} onClick={() => setFilter(t)} style={{
+                      fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700,
+                      letterSpacing: ".1em", textTransform: "uppercase", padding: "7px 14px",
+                      background: filter === t ? C.navy : "white",
+                      color: filter === t ? C.cream : C.g600,
+                      border: `1px solid ${filter === t ? C.navy : C.g200}`,
+                      cursor: "pointer", transition: "all .2s",
+                    }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setEditing({ ...BLANK_ESSAY })} style={btnStyle}>
+                  + New Essay
                 </button>
-              ))}
+              </div>
+            )}
+
+            {editing && (
+              <EssayForm
+                initial={editing}
+                allEssays={essays}
+                onSave={handleSaved}
+                onCancel={() => setEditing(null)}
+              />
+            )}
+
+            {!editing && (
+              loading ? (
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g600 }}>
+                  Loading essays…
+                </p>
+              ) : (
+                <div>
+                  {displayed.map(essay => (
+                    <EssayRow
+                      key={essay.id}
+                      essay={essay}
+                      onEdit={() => setEditing({ ...essay })}
+                      onDelete={() => setDeleteTarget(essay)}
+                    />
+                  ))}
+                  {displayed.length === 0 && (
+                    <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g400,
+                      padding: "40px 0", textAlign: "center" }}>
+                      No essays in this theme.
+                    </p>
+                  )}
+                </div>
+              )
+            )}
+          </>
+        )}
+
+        {/* ── AUDITS TAB ── */}
+        {activeTab === "audits" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: C.navy }}>
+                System Audit Submissions
+              </h2>
+              <button onClick={() => loadCollection("audits")} style={{ ...outlineBtn, padding: "8px 16px", fontSize: 11 }}>
+                Refresh
+              </button>
             </div>
-            <button onClick={() => setEditing({ ...BLANK_ESSAY })} style={btnStyle}>
-              + New Essay
-            </button>
+            {collectionLoading ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g600 }}>Loading…</p>
+            ) : audits.length === 0 ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g400, padding: "40px 0", textAlign: "center" }}>No audit submissions yet.</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Email</th>
+                      <th style={thStyle}>Name</th>
+                      <th style={thStyle}>Profile</th>
+                      <th style={thStyle}>Scores</th>
+                      <th style={thStyle}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {audits.map(row => (
+                      <tr key={row.id} onMouseOver={e => e.currentTarget.style.background = C.g100} onMouseOut={e => e.currentTarget.style.background = "white"}>
+                        <td style={tdStyle}>{row.email || "—"}</td>
+                        <td style={tdStyle}>{row.name || "—"}</td>
+                        <td style={{ ...tdStyle, fontWeight: 600, color: C.navy }}>{row.profile || "—"}</td>
+                        <td style={{ ...tdStyle, fontSize: 12, color: C.g600 }}>
+                          {row.scores ? Object.entries(row.scores).map(([k, v]) => `${k.split(" ")[0]}: ${v}`).join(" · ") : "—"}
+                        </td>
+                        <td style={{ ...tdStyle, color: C.g400, whiteSpace: "nowrap" }}>{formatTS(row.timestamp)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: C.g400, marginTop: 12 }}>{audits.length} submission{audits.length !== 1 ? "s" : ""}</p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Essay form */}
-        {editing && (
-          <EssayForm
-            initial={editing}
-            allEssays={essays}
-            onSave={handleSaved}
-            onCancel={() => setEditing(null)}
-          />
+        {/* ── WAITLIST TAB ── */}
+        {activeTab === "waitlist" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: C.navy }}>
+                Reconfiguration Lab Waitlist
+              </h2>
+              <button onClick={() => loadCollection("waitlist")} style={{ ...outlineBtn, padding: "8px 16px", fontSize: 11 }}>
+                Refresh
+              </button>
+            </div>
+            {collectionLoading ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g600 }}>Loading…</p>
+            ) : waitlist.length === 0 ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g400, padding: "40px 0", textAlign: "center" }}>No waitlist signups yet.</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Email</th>
+                      <th style={thStyle}>Name</th>
+                      <th style={thStyle}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {waitlist.map(row => (
+                      <tr key={row.id} onMouseOver={e => e.currentTarget.style.background = C.g100} onMouseOut={e => e.currentTarget.style.background = "white"}>
+                        <td style={tdStyle}>{row.email || "—"}</td>
+                        <td style={tdStyle}>{row.name || "—"}</td>
+                        <td style={{ ...tdStyle, color: C.g400, whiteSpace: "nowrap" }}>{formatTS(row.timestamp)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: C.g400, marginTop: 12 }}>{waitlist.length} signup{waitlist.length !== 1 ? "s" : ""}</p>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Essay table */}
-        {!editing && (
-          loading ? (
-            <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g600 }}>
-              Loading essays…
-            </p>
-          ) : (
-            <div>
-              {displayed.map(essay => (
-                <EssayRow
-                  key={essay.id}
-                  essay={essay}
-                  onEdit={() => setEditing({ ...essay })}
-                  onDelete={() => setDeleteTarget(essay)}
-                />
-              ))}
-              {displayed.length === 0 && (
-                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g400,
-                  padding: "40px 0", textAlign: "center" }}>
-                  No essays in this theme.
-                </p>
-              )}
+        {/* ── INQUIRIES TAB ── */}
+        {activeTab === "inquiries" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: C.navy }}>
+                Corporate Inquiries
+              </h2>
+              <button onClick={() => loadCollection("inquiries")} style={{ ...outlineBtn, padding: "8px 16px", fontSize: 11 }}>
+                Refresh
+              </button>
             </div>
-          )
+            {collectionLoading ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g600 }}>Loading…</p>
+            ) : inquiries.length === 0 ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g400, padding: "40px 0", textAlign: "center" }}>No inquiries yet.</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Name</th>
+                      <th style={thStyle}>Email</th>
+                      <th style={thStyle}>Organization</th>
+                      <th style={thStyle}>Message</th>
+                      <th style={thStyle}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inquiries.map(row => (
+                      <tr key={row.id} onMouseOver={e => e.currentTarget.style.background = C.g100} onMouseOut={e => e.currentTarget.style.background = "white"}>
+                        <td style={{ ...tdStyle, fontWeight: 600 }}>{row.name || "—"}</td>
+                        <td style={tdStyle}>{row.email || "—"}</td>
+                        <td style={tdStyle}>{row.organization || "—"}</td>
+                        <td style={{ ...tdStyle, maxWidth: 300, color: C.g600 }}>
+                          {row.message ? (row.message.length > 120 ? row.message.slice(0, 120) + "…" : row.message) : "—"}
+                        </td>
+                        <td style={{ ...tdStyle, color: C.g400, whiteSpace: "nowrap" }}>{formatTS(row.timestamp)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: C.g400, marginTop: 12 }}>{inquiries.length} inquir{inquiries.length !== 1 ? "ies" : "y"}</p>
+              </div>
+            )}
+          </div>
         )}
+
       </div>
     </div>
   );

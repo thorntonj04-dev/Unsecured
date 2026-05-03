@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { LOCAL_ESSAYS } from "./essays";
-import { fetchEssays } from "./firebase";
+import { fetchEssays, submitInquiry } from "./firebase";
+import SystemAuditPage from "./SystemAuditPage";
+import CohortPage from "./CohortPage";
 
 // ─── TOKENS ───────────────────────────────────────────────────────────────────
 const C = {
@@ -322,7 +324,7 @@ export default function App() {
 
           {/* Desktop nav */}
           <div className="desk-only" style={{ display:"flex", gap:32, alignItems:"center" }}>
-            {[["Writing","thinking"],["Ideas Lab","ideas"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["The Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
               <span key={p} className={`ni${page===p?" on":""}`} onClick={()=>go(p)}>{l}</span>
             ))}
           </div>
@@ -342,7 +344,7 @@ export default function App() {
         {/* Mobile dropdown menu */}
         {menuOpen && (
           <div style={{ background:"white", borderTop:`1px solid ${C.g200}`, padding:"8px 0", boxShadow:`0 8px 24px rgba(0,0,0,.1)` }}>
-            {[["Writing","thinking"],["Ideas Lab","ideas"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["The Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
               <div key={p} onClick={()=>go(p)} style={{ padding:"16px 24px", borderBottom:`1px solid ${C.g200}`, cursor:"pointer", transition:"background .15s" }}
                 onMouseOver={e=>e.currentTarget.style.background=C.g100}
                 onMouseOut={e=>e.currentTarget.style.background="white"}>
@@ -359,6 +361,8 @@ export default function App() {
         : page==="home"      ? <HomePage go={go} essays={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
         : page==="thinking"  ? <ThinkingPage essays={essays} setEssay={setEssay} mobile={mobile} px={px}/>
         : page==="ideas"     ? <IdeasPage mobile={mobile} px={px}/>
+        : page==="audit"     ? <SystemAuditPage mobile={mobile} px={px} essays={essays}/>
+        : page==="cohort"    ? <CohortPage mobile={mobile} px={px}/>
         : page==="work"      ? <WorkPage mobile={mobile} px={px}/>
         : page==="about"     ? <AboutPage go={go} mobile={mobile} px={px}/>
         : null}
@@ -375,7 +379,7 @@ export default function App() {
               </div>
               <div>
                 <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",color:C.gold,marginBottom:16 }}>Navigate</p>
-                {[["Writing","thinking"],["Ideas Lab","ideas"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+                {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["The Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
                   <p key={p} onClick={()=>go(p)} className="ss" style={{ fontSize:14,color:C.g400,marginBottom:10,cursor:"pointer",transition:"color .2s" }}
                     onMouseOver={e=>e.target.style.color=C.cream} onMouseOut={e=>e.target.style.color=C.g400}>{l}</p>
                 ))}
@@ -958,6 +962,202 @@ function WorkPage({ mobile, px }) {
           <p className="ss" style={{ fontSize:15,lineHeight:1.9,color:C.g600,maxWidth:600 }}>The framing is systems-based, not motivational. I work best with people who are already high-functioning and want to understand why the system they've built is costing more than it should.</p>
         </div>
       </Reveal>
+      <Reveal style={{ marginTop:56 }}>
+        <InquiryForm mobile={mobile} />
+      </Reveal>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INQUIRY FORM
+// ═══════════════════════════════════════════════════════════════════════════════
+function InquiryForm({ mobile }) {
+  const [form, setForm] = useState({
+    name: "", email: "", organization: "", role: "", teamSize: "",
+    interests: [], message: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })); }
+
+  function toggleInterest(interest) {
+    setForm(f => ({
+      ...f,
+      interests: f.interests.includes(interest)
+        ? f.interests.filter(i => i !== interest)
+        : [...f.interests, interest],
+    }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.name.trim() || !form.email.trim()) {
+      setError("Name and email are required.");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      await submitInquiry({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        organization: form.organization.trim(),
+        role: form.role.trim(),
+        teamSize: form.teamSize,
+        interests: form.interests,
+        message: form.message.trim(),
+      });
+      setDone(true);
+    } catch (err) {
+      setError("Something went wrong. Please try again or email directly.");
+      console.error("submitInquiry failed:", err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const fieldStyle = {
+    width: "100%", padding: "13px 15px",
+    border: `1.5px solid ${C.g200}`, background: "white", color: C.g800,
+    fontFamily: "'Source Sans 3',sans-serif", fontSize: 14,
+    outline: "none", boxSizing: "border-box", borderRadius: 0,
+    transition: "border-color .22s",
+  };
+
+  const labelStyle = {
+    display: "block", fontFamily: "'Source Sans 3',sans-serif",
+    fontSize: 11, fontWeight: 700, letterSpacing: ".12em",
+    textTransform: "uppercase", color: C.g600, marginBottom: 8,
+  };
+
+  return (
+    <div style={{ background: "white", border: `1px solid ${C.g200}`, padding: mobile ? "32px 28px" : "48px 52px", borderTop: `3px solid ${C.navy}` }}>
+      <div style={{ width: 36, height: 2, background: C.gold, marginBottom: 20 }} />
+      <h2 className="pf" style={{ fontSize: mobile ? 24 : 28, fontWeight: 700, color: C.navy, marginBottom: 12, letterSpacing: "-.01em" }}>
+        Start a Conversation
+      </h2>
+      <p className="ss" style={{ fontSize: 15, lineHeight: 1.85, color: C.g600, marginBottom: 32, maxWidth: 560 }}>
+        If something here is relevant to your organization or leadership team, use this form to reach out. I'll follow up directly.
+      </p>
+
+      {done ? (
+        <div style={{ padding: "32px 36px", background: C.creamDark, border: `1px solid ${C.g200}`, borderLeft: `3px solid ${C.gold}` }}>
+          <p className="pf" style={{ fontSize: 22, fontWeight: 700, color: C.navy, marginBottom: 10 }}>Message received.</p>
+          <p className="ss" style={{ fontSize: 15, color: C.g600, lineHeight: 1.8 }}>
+            I'll follow up within a few days. Thank you for reaching out.
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: "16px 24px", marginBottom: 16 }}>
+            <div>
+              <label style={labelStyle}>Name <span style={{ color: "#c0392b" }}>*</span></label>
+              <input
+                style={fieldStyle} type="text" value={form.name}
+                onChange={e => set("name", e.target.value)}
+                placeholder="Your full name"
+                onFocus={e => e.target.style.borderColor = C.navy}
+                onBlur={e => e.target.style.borderColor = C.g200}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Email <span style={{ color: "#c0392b" }}>*</span></label>
+              <input
+                style={fieldStyle} type="email" value={form.email}
+                onChange={e => set("email", e.target.value)}
+                placeholder="you@example.com"
+                onFocus={e => e.target.style.borderColor = C.navy}
+                onBlur={e => e.target.style.borderColor = C.g200}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Organization</label>
+              <input
+                style={fieldStyle} type="text" value={form.organization}
+                onChange={e => set("organization", e.target.value)}
+                placeholder="Company or team name"
+                onFocus={e => e.target.style.borderColor = C.navy}
+                onBlur={e => e.target.style.borderColor = C.g200}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Your Role</label>
+              <input
+                style={fieldStyle} type="text" value={form.role}
+                onChange={e => set("role", e.target.value)}
+                placeholder="e.g. VP of Engineering"
+                onFocus={e => e.target.style.borderColor = C.navy}
+                onBlur={e => e.target.style.borderColor = C.g200}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Team Size</label>
+            <select
+              value={form.teamSize}
+              onChange={e => set("teamSize", e.target.value)}
+              style={{ ...fieldStyle, cursor: "pointer", appearance: "none", backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2368605a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center" }}
+              onFocus={e => e.target.style.borderColor = C.navy}
+              onBlur={e => e.target.style.borderColor = C.g200}
+            >
+              <option value="">Select team size</option>
+              <option value="1–10">1–10</option>
+              <option value="11–50">11–50</option>
+              <option value="51–200">51–200</option>
+              <option value="200+">200+</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Areas of Interest</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {["Speaking", "Workshops", "Advisory"].map(interest => {
+                const selected = form.interests.includes(interest);
+                return (
+                  <button
+                    key={interest}
+                    type="button"
+                    onClick={() => toggleInterest(interest)}
+                    style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", padding: "9px 16px", background: selected ? C.navy : "white", color: selected ? C.cream : C.g600, border: `1.5px solid ${selected ? C.navy : C.g200}`, cursor: "pointer", transition: "all .2s" }}
+                  >
+                    {interest}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={labelStyle}>Message</label>
+            <textarea
+              value={form.message}
+              onChange={e => set("message", e.target.value)}
+              placeholder="What's the context? What are you working on or thinking about?"
+              rows={5}
+              style={{ ...fieldStyle, resize: "vertical", lineHeight: 1.65 }}
+              onFocus={e => e.target.style.borderColor = C.navy}
+              onBlur={e => e.target.style.borderColor = C.g200}
+            />
+          </div>
+
+          {error && (
+            <p className="ss" style={{ fontSize: 13, color: "#e74c3c", marginBottom: 16 }}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn-d"
+            style={{ opacity: submitting ? 0.6 : 1, cursor: submitting ? "not-allowed" : "pointer" }}
+          >
+            {submitting ? "Sending…" : "Send Inquiry"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }
