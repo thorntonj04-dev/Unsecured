@@ -2,7 +2,6 @@ import { useState } from "react";
 import { saveAuditResult } from "./firebase";
 import { LOCAL_ESSAYS } from "./essays";
 
-// ─── DESIGN TOKENS (mirrors App.jsx) ─────────────────────────────────────────
 const C = {
   navy: "#0d1720", navyMid: "#162030", navyLight: "#1e2f42",
   cream: "#f4efe6", creamDark: "#ece5d8",
@@ -16,9 +15,9 @@ const TC = {
   "Internal Rules": "#5f7050", Reconfiguration: "#7a6b52",
 };
 
-// ─── QUESTIONS ────────────────────────────────────────────────────────────────
+// ─── 20 QUESTIONS (5 per theme, mix of direct + scenario) ─────────────────────
 const QUESTIONS = [
-  // Pressure
+  // ── PRESSURE ──────────────────────────────────────────────────────────────────
   { theme: "Pressure", text: "When you're tired at the end of a hard stretch, what does that tiredness mean to you?", answers: [
     { text: "It means I'm doing something right — I earned it.", score: 1 },
     { text: "It's just how things are. I don't read much into it.", score: 2 },
@@ -37,7 +36,22 @@ const QUESTIONS = [
     { text: "I've learned to read those signals and slow down.", score: 3 },
     { text: "I catch it early and adjust before it builds.", score: 4 },
   ]},
-  // Urgency
+  // Scenario
+  { theme: "Pressure", text: "It's the end of a brutal week. You're behind on two things, someone just added a new ask, and you have dinner plans tonight you've already rescheduled twice. You:", answers: [
+    { text: "Push through — dinner can wait again.", score: 1 },
+    { text: "Go to dinner but spend most of it thinking about work.", score: 2 },
+    { text: "Protect the dinner, then reassess priorities in the morning.", score: 3 },
+    { text: "Notice this is a pattern and treat it as a signal something needs to change.", score: 4 },
+  ]},
+  { theme: "Pressure", text: "The last time you genuinely rested — not just caught up, but actually restored — was:", answers: [
+    { text: "I'm honestly not sure what that would feel like.", score: 1 },
+    { text: "A while ago — I'm usually managing, not recovering.", score: 2 },
+    { text: "Reasonably recent, but only when I deliberately made space for it.", score: 3 },
+    { text: "I build real recovery in regularly — I've learned it's not optional.", score: 4 },
+  ]},
+
+  // ── URGENCY ───────────────────────────────────────────────────────────────────
+  // Scenario
   { theme: "Urgency", text: "A message arrives at 9pm. What actually happens?", answers: [
     { text: "I respond — faster is better.", score: 1 },
     { text: "I feel anxious until I respond, even if I wait.", score: 2 },
@@ -56,7 +70,21 @@ const QUESTIONS = [
     { text: "Just the system settling. Not necessarily proof of correctness.", score: 3 },
     { text: "Something I've learned not to confuse with actual resolution.", score: 4 },
   ]},
-  // Internal Rules
+  // Scenario
+  { theme: "Urgency", text: "A colleague marks a request 'urgent' — but the actual deadline is three days away. You:", answers: [
+    { text: "Treat it as urgent because that's how it was labeled.", score: 1 },
+    { text: "Feel the pull of urgency even though you know the timeline is flexible.", score: 2 },
+    { text: "Note the real deadline and plan accordingly, but acknowledge the tension.", score: 3 },
+    { text: "Recognize this as a manufactured urgency and respond to the actual deadline.", score: 4 },
+  ]},
+  { theme: "Urgency", text: "Your relationship with notifications is:", answers: [
+    { text: "On for everything — I don't want to miss something important.", score: 1 },
+    { text: "Mostly on; I try to ignore them when focused but usually can't.", score: 2 },
+    { text: "I've turned off most alerts and check on my own schedule.", score: 3 },
+    { text: "Intentionally managed — I access information when I decide to, not when I'm signaled.", score: 4 },
+  ]},
+
+  // ── INTERNAL RULES ────────────────────────────────────────────────────────────
   { theme: "Internal Rules", text: "The rules that shape how you work were mostly:", answers: [
     { text: "Absorbed from environments I was in — I didn't consciously choose them.", score: 1 },
     { text: "A mix. Some chosen, some just happened.", score: 2 },
@@ -75,7 +103,21 @@ const QUESTIONS = [
     { text: "Something you value but actively set limits around.", score: 3 },
     { text: "One part of reliability — not the whole definition of it.", score: 4 },
   ]},
-  // Reconfiguration
+  // Scenario
+  { theme: "Internal Rules", text: "Someone close to you mentions they've started turning off work email after 6pm. Your first honest reaction is:", answers: [
+    { text: "That seems risky — what if something important comes up?", score: 1 },
+    { text: "I admire it, but I'm not sure I could do it without anxiety.", score: 2 },
+    { text: "Honestly interesting — I've thought about something similar.", score: 3 },
+    { text: "Familiar — I've made similar decisions or am actively working toward them.", score: 4 },
+  ]},
+  { theme: "Internal Rules", text: "When you take on more than you have capacity for, the reason is usually:", answers: [
+    { text: "Saying no didn't feel like a real option.", score: 1 },
+    { text: "I agreed before thinking it through clearly.", score: 2 },
+    { text: "I assessed the trade-off and consciously absorbed it.", score: 3 },
+    { text: "This happens less now — I've gotten better at reading my own limits.", score: 4 },
+  ]},
+
+  // ── RECONFIGURATION ───────────────────────────────────────────────────────────
   { theme: "Reconfiguration", text: "Your current level of alertness and readiness feels:", answers: [
     { text: "This is just how I am — I'm not sure it's something to change.", score: 1 },
     { text: "Higher than it needs to be, but I haven't figured out how to bring it down.", score: 2 },
@@ -94,6 +136,19 @@ const QUESTIONS = [
     { text: "I have a sense of what needs to happen and I'm moving toward it.", score: 3 },
     { text: "Smaller than it used to be — I'm on the other side of the hardest part.", score: 4 },
   ]},
+  // Scenario
+  { theme: "Reconfiguration", text: "You notice that you consistently feel depleted by Sunday evening. You:", answers: [
+    { text: "Assume it's just part of having a full, demanding life.", score: 1 },
+    { text: "Wonder about it briefly but don't know what to do with it.", score: 2 },
+    { text: "Try to identify the pattern and experiment with what causes it.", score: 3 },
+    { text: "Treat it as diagnostic data — something in the configuration is producing that outcome.", score: 4 },
+  ]},
+  { theme: "Reconfiguration", text: "The idea of changing how you operate — not just what you do, but the underlying configuration — feels:", answers: [
+    { text: "Unclear to me. Behavior is behavior.", score: 1 },
+    { text: "Something I understand in theory but struggle to apply.", score: 2 },
+    { text: "A distinction I'm actively working with in my own life.", score: 3 },
+    { text: "Central to how I think about change — the how is where all the leverage is.", score: 4 },
+  ]},
 ];
 
 // ─── PROFILES ─────────────────────────────────────────────────────────────────
@@ -104,7 +159,7 @@ const PROFILES = {
     color: "#8b6e52",
     body: [
       "Your system reads pressure as a test — and tests are meant to be passed. So you endure. You've gotten very good at carrying things, functioning under weight, and continuing when others would stop. That capability is real.",
-      "What isn't being asked often enough: whether the conditions generating the pressure are ones worth continuing. Endurance keeps you inside situations that may not deserve to continue. It's a response, not a strategy.",
+      "What isn't being asked often enough: whether the conditions generating the pressure are ones worth continuing inside. Endurance keeps you inside situations that may not deserve to continue. It's a response, not a strategy.",
       "The signal underneath the exhaustion isn't asking you to become stronger. It's asking you to become clearer — about what this pressure means, and whether it's coming through pathways that were ever meant to handle this volume.",
     ],
     insight: "Pressure is a signal, not a test. Tests are meant to be passed. Signals are meant to be read.",
@@ -148,6 +203,50 @@ const PROFILES = {
   },
 };
 
+// Brief descriptions shown under the secondary profile
+const SECONDARY_READS = {
+  Pressure: "Pressure is also running close to the surface — likely as endurance. The question worth asking: is the capacity to carry more actually serving you, or just sustaining the load?",
+  Urgency: "Urgency is running close behind your primary pattern. The fast-response loop may be reinforcing the primary configuration — each one feeding the other.",
+  "Internal Rules": "Some of the rules governing how you operate are also present here — granting access to your time and attention without evaluation. Worth auditing alongside the primary.",
+  Reconfiguration: "Baseline drift is also present. The gap between current settings and what the situation actually requires may be wider than it currently appears.",
+};
+
+// Per-theme score interpretation (out of 20 max, 5 questions)
+const SCORE_READS = {
+  Pressure: {
+    low:     "Deeply embedded. Pressure has become the operating environment — so normalized it rarely registers as a signal anymore.",
+    midLow:  "Active but partially visible. You notice pressure when it's severe, but the baseline level runs without much inspection.",
+    midHigh: "Developing awareness. You've started reading the signals — the difficult part, and the necessary one.",
+    high:    "Largely calibrated. Pressure mostly registers as information for you, not obligation.",
+  },
+  Urgency: {
+    low:     "Deeply embedded. Your system treats urgency as authority — the signal fires and response follows before you've evaluated whether it should.",
+    midLow:  "Active but partially visible. Urgency still moves you faster than necessary, but you're beginning to notice the loop.",
+    midHigh: "Developing latency. You've started putting space between urgency and action. That gap is where discernment lives.",
+    high:    "Largely calibrated. Urgency no longer runs automatically — you evaluate before acting.",
+  },
+  "Internal Rules": {
+    low:     "Deeply embedded. Rules you didn't consciously choose are operating quietly — granting access to your time and energy without evaluation.",
+    midLow:  "Active but partially visible. You've identified some rules, but the deeper ones are still running beneath the surface.",
+    midHigh: "Active inspection. You're auditing the rules you operate by. Most people never get this far.",
+    high:    "Largely calibrated. You have real visibility into your internal rules and can evaluate which ones still serve you.",
+  },
+  Reconfiguration: {
+    low:     "Deeply embedded. Current settings have been running long enough to feel like personality — the drift is real, but inspection hasn't happened yet.",
+    midLow:  "Active but partially visible. You're aware reconfiguration is possible, but the mechanics are still unclear.",
+    midHigh: "Active work. You're approaching change as a systems problem, not a willpower problem. That's the right frame.",
+    high:    "Largely calibrated. Visibility and inspection are part of how you operate — you treat your own patterns as worth understanding.",
+  },
+};
+
+function getScoreRead(theme, score) {
+  const r = SCORE_READS[theme];
+  if (score <= 9)  return r.low;
+  if (score <= 13) return r.midLow;
+  if (score <= 17) return r.midHigh;
+  return r.high;
+}
+
 // ─── SCORING ──────────────────────────────────────────────────────────────────
 function computeScores(answers) {
   const scores = { Pressure: 0, Urgency: 0, "Internal Rules": 0, Reconfiguration: 0 };
@@ -155,22 +254,18 @@ function computeScores(answers) {
   return scores;
 }
 
-function computeProfile(scores) {
-  const order = ["Pressure", "Urgency", "Internal Rules", "Reconfiguration"];
-  let lowestTheme = order[0];
-  let lowestScore = scores[order[0]];
-  for (const theme of order) {
-    if (scores[theme] < lowestScore) {
-      lowestScore = scores[theme];
-      lowestTheme = theme;
-    }
-  }
-  return lowestTheme;
+function computeProfiles(scores) {
+  const sorted = Object.entries(scores).sort((a, b) => a[1] - b[1]);
+  return {
+    primary: sorted[0][0],
+    secondary: sorted[1][0],
+    isTied: sorted[1][1] - sorted[0][1] <= 1,
+  };
 }
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
-export default function SystemAuditPage({ mobile, px }) {
-  const [step, setStep] = useState("intro"); // 'intro' | 'quiz' | 'email' | 'results'
+export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
+  const [step, setStep] = useState("intro");
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [name, setName] = useState("");
@@ -178,9 +273,12 @@ export default function SystemAuditPage({ mobile, px }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [profile, setProfile] = useState(null);
+  const [secondaryProfile, setSecondaryProfile] = useState(null);
+  const [isTied, setIsTied] = useState(false);
   const [scores, setScores] = useState(null);
   const [fade, setFade] = useState(true);
 
+  const essays = passedEssays || LOCAL_ESSAYS;
   const totalQ = QUESTIONS.length;
   const progress = (qIndex / totalQ) * 100;
 
@@ -196,11 +294,12 @@ export default function SystemAuditPage({ mobile, px }) {
         setFade(true);
       }, 200);
     } else {
-      // All questions done
       const computed = computeScores(newAnswers);
-      const primaryProfile = computeProfile(computed);
+      const { primary, secondary, isTied: tied } = computeProfiles(computed);
       setScores(computed);
-      setProfile(primaryProfile);
+      setProfile(primary);
+      setSecondaryProfile(secondary);
+      setIsTied(tied);
       setStep("email");
     }
   }
@@ -211,9 +310,14 @@ export default function SystemAuditPage({ mobile, px }) {
     setSubmitting(true);
     setError("");
     try {
-      await saveAuditResult({ email: email.trim(), name: name.trim(), scores, profile });
+      await saveAuditResult({
+        email: email.trim(),
+        name: name.trim(),
+        scores,
+        profile,
+        secondaryProfile,
+      });
     } catch (err) {
-      // Don't block the user from seeing results if save fails
       console.warn("saveAuditResult failed:", err.message);
     } finally {
       setSubmitting(false);
@@ -229,6 +333,8 @@ export default function SystemAuditPage({ mobile, px }) {
     setEmail("");
     setError("");
     setProfile(null);
+    setSecondaryProfile(null);
+    setIsTied(false);
     setScores(null);
     setFade(true);
   }
@@ -237,7 +343,6 @@ export default function SystemAuditPage({ mobile, px }) {
   if (step === "intro") {
     return (
       <div>
-        {/* Navy hero */}
         <div style={{ background: C.navy, padding: mobile ? `72px ${px}` : `96px ${px}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(ellipse at 30% 50%, ${C.navyLight} 0%, transparent 65%)`, opacity: 0.8 }} />
           <div style={{ maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 1 }}>
@@ -249,7 +354,7 @@ export default function SystemAuditPage({ mobile, px }) {
               Scan Your System
             </h1>
             <p style={{ fontFamily: "'Libre Baskerville',serif", fontSize: mobile ? 16 : 18, lineHeight: 1.78, color: "rgba(244,239,230,.72)", marginBottom: 20, fontStyle: "italic" }}>
-              Twelve questions. Four frameworks. One honest look at what's actually running.
+              Twenty questions. Four frameworks. A primary and secondary profile — a more complete picture of what's actually running.
             </p>
             <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: mobile ? 15 : 16, lineHeight: 1.88, color: "rgba(244,239,230,.55)", marginBottom: 40, maxWidth: 580 }}>
               This audit is built around the four frameworks in <em style={{ color: "rgba(244,239,230,.75)" }}>Unsecured</em> — Pressure, Urgency, Internal Rules, and Reconfiguration. Answer honestly, not aspirationally. The result isn't a score. It's a profile — a picture of where your system is operating and what it may need next.
@@ -265,14 +370,13 @@ export default function SystemAuditPage({ mobile, px }) {
           </div>
         </div>
 
-        {/* What to expect */}
         <div style={{ background: C.creamDark, borderBottom: `1px solid ${C.g200}`, padding: mobile ? `48px ${px}` : `64px ${px}` }}>
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(3,1fr)", gap: mobile ? 28 : 40 }}>
               {[
-                { n: "12", label: "Questions", sub: "Three per framework, each designed to surface how you actually operate." },
+                { n: "20", label: "Questions", sub: "Five per framework — direct and scenario-based, designed to surface how you actually operate." },
                 { n: "4", label: "Frameworks", sub: "Pressure, Urgency, Internal Rules, and Reconfiguration." },
-                { n: "1", label: "Profile", sub: "Based on your lowest-scoring framework — where the most opportunity lives." },
+                { n: "2", label: "Profiles", sub: "A primary and secondary configuration — because most systems are running more than one pattern." },
               ].map(({ n, label, sub }) => (
                 <div key={label} style={{ textAlign: mobile ? "left" : "center" }}>
                   <p style={{ fontFamily: "'Playfair Display',serif", fontSize: mobile ? 36 : 40, fontWeight: 900, color: C.navy, lineHeight: 1, marginBottom: 6 }}>{n}</p>
@@ -295,13 +399,11 @@ export default function SystemAuditPage({ mobile, px }) {
 
     return (
       <div style={{ minHeight: "80vh", background: C.g100 }}>
-        {/* Progress bar */}
         <div style={{ height: 3, background: C.g200, position: "sticky", top: 0, zIndex: 10 }}>
           <div style={{ height: "100%", background: C.gold, width: `${progress}%`, transition: "width .4s ease" }} />
         </div>
 
         <div style={{ maxWidth: 720, margin: "0 auto", padding: mobile ? `48px ${px}` : `72px ${px}` }}>
-          {/* Question number */}
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 36 }}>
             <span style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: mobile ? 28 : 36, fontWeight: 700, color: C.gold, letterSpacing: "-.01em", lineHeight: 1 }}>
               {qNum}
@@ -314,16 +416,11 @@ export default function SystemAuditPage({ mobile, px }) {
             </span>
           </div>
 
-          {/* Question text — fade transition */}
-          <div
-            key={qIndex}
-            style={{ opacity: fade ? 1 : 0, transition: "opacity .2s ease" }}
-          >
+          <div key={qIndex} style={{ opacity: fade ? 1 : 0, transition: "opacity .2s ease" }}>
             <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: mobile ? "clamp(20px,5vw,28px)" : "clamp(22px,3.5vw,32px)", fontWeight: 700, color: C.navy, lineHeight: 1.35, marginBottom: 36, letterSpacing: "-.01em" }}>
               {q.text}
             </h2>
 
-            {/* Answer options */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {q.answers.map((ans, i) => (
                 <button
@@ -356,48 +453,35 @@ export default function SystemAuditPage({ mobile, px }) {
             Your results are ready.
           </h1>
           <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: mobile ? 15 : 16, lineHeight: 1.8, color: "rgba(244,239,230,.6)", marginBottom: 36 }}>
-            Enter your email to receive your system profile.
+            Enter your email to receive your system profile — primary configuration, secondary pattern, and a full score breakdown.
           </p>
 
           <form onSubmit={handleEmailSubmit}>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.g400, marginBottom: 8 }}>
-                First Name <span style={{ color: C.g400, fontWeight: 400 }}>(optional)</span>
-              </label>
+              <label style={gateLabel}>First Name <span style={{ color: C.g400, fontWeight: 400 }}>(optional)</span></label>
               <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Your name"
-                style={{ width: "100%", padding: "14px 16px", border: `1.5px solid ${C.navyLight}`, background: C.navyMid, color: C.cream, fontFamily: "'Source Sans 3',sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box", borderRadius: 0, transition: "border-color .2s" }}
+                type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
+                style={gateInput}
                 onFocus={e => e.target.style.borderColor = C.gold}
                 onBlur={e => e.target.style.borderColor = C.navyLight}
               />
             </div>
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.g400, marginBottom: 8 }}>
-                Email <span style={{ color: "#c0392b" }}>*</span>
-              </label>
+              <label style={gateLabel}>Email <span style={{ color: "#c0392b" }}>*</span></label>
               <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                style={{ width: "100%", padding: "14px 16px", border: `1.5px solid ${C.navyLight}`, background: C.navyMid, color: C.cream, fontFamily: "'Source Sans 3',sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box", borderRadius: 0, transition: "border-color .2s" }}
+                type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com" required
+                style={gateInput}
                 onFocus={e => e.target.style.borderColor = C.gold}
                 onBlur={e => e.target.style.borderColor = C.navyLight}
               />
             </div>
-            {error && (
-              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 13, color: "#e74c3c", marginBottom: 16 }}>{error}</p>
-            )}
+            {error && <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 13, color: "#e74c3c", marginBottom: 16 }}>{error}</p>}
             <button
-              type="submit"
-              disabled={submitting}
+              type="submit" disabled={submitting}
               style={{ width: "100%", fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", padding: "16px 28px", background: submitting ? C.navyLight : C.gold, color: C.navy, border: "none", cursor: submitting ? "not-allowed" : "pointer", transition: "all .22s", minHeight: 52, opacity: submitting ? 0.7 : 1 }}
-              onMouseOver={e => { if (!submitting) { e.currentTarget.style.background = C.goldLight; } }}
-              onMouseOut={e => { if (!submitting) { e.currentTarget.style.background = C.gold; } }}
+              onMouseOver={e => { if (!submitting) e.currentTarget.style.background = C.goldLight; }}
+              onMouseOut={e => { if (!submitting) e.currentTarget.style.background = C.gold; }}
             >
               {submitting ? "Saving…" : "Get My Results"}
             </button>
@@ -414,70 +498,120 @@ export default function SystemAuditPage({ mobile, px }) {
   // ── RESULTS ────────────────────────────────────────────────────────────────
   if (step === "results" && profile && scores) {
     const p = PROFILES[profile];
-    const relatedEssays = p.essayIds.map(id => LOCAL_ESSAYS.find(e => e.id === id)).filter(Boolean);
+    const sp = secondaryProfile ? PROFILES[secondaryProfile] : null;
+    const relatedEssays = p.essayIds.map(id => essays.find(e => e.id === id)).filter(Boolean);
+    const maxScore = 20;
 
     return (
       <div>
-        {/* Results hero */}
+        {/* Primary profile hero */}
         <div style={{ background: C.navy, padding: mobile ? `72px ${px}` : `96px ${px}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(ellipse at 20% 50%, ${C.navyLight} 0%, transparent 60%)`, opacity: 0.9 }} />
           <div style={{ maxWidth: 760, margin: "0 auto", position: "relative", zIndex: 1 }}>
             <div style={{ width: 36, height: 2, background: p.color, marginBottom: 20 }} />
             <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", color: p.color, marginBottom: 14 }}>
-              Your System Profile
+              Primary Configuration
             </p>
             <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: mobile ? "clamp(28px,8vw,48px)" : "clamp(32px,5vw,56px)", fontWeight: 900, color: C.cream, lineHeight: 1.1, marginBottom: 16, letterSpacing: "-.02em" }}>
               {p.name}
             </h1>
-            <p style={{ fontFamily: "'Libre Baskerville',serif", fontSize: mobile ? 17 : 20, fontStyle: "italic", color: "rgba(244,239,230,.65)", marginBottom: 0, lineHeight: 1.55 }}>
+            <p style={{ fontFamily: "'Libre Baskerville',serif", fontSize: mobile ? 17 : 20, fontStyle: "italic", color: "rgba(244,239,230,.65)", lineHeight: 1.55 }}>
               {p.tagline}
             </p>
+            {isTied && (
+              <div style={{ marginTop: 20, padding: "12px 18px", background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", display: "inline-flex", gap: 10, alignItems: "center" }}>
+                <span style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: "rgba(244,239,230,.6)", lineHeight: 1.5 }}>
+                  Your primary and secondary patterns scored within one point of each other — both are worth your full attention.
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Score summary */}
-        <div style={{ background: C.creamDark, borderBottom: `1px solid ${C.g200}`, padding: mobile ? `32px ${px}` : `40px ${px}` }}>
+        {/* Score grid — all 4 themes with tier descriptions */}
+        <div style={{ background: C.creamDark, borderBottom: `1px solid ${C.g200}`, padding: mobile ? `32px ${px}` : `44px ${px}` }}>
           <div style={{ maxWidth: 760, margin: "0 auto" }}>
             <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.g400, marginBottom: 18 }}>
-              Score by Framework
+              Full Configuration Scan
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(4,1fr)", gap: mobile ? 12 : 16 }}>
-              {Object.entries(scores).map(([theme, score]) => {
-                const isLowest = theme === profile;
-                return (
-                  <div key={theme} style={{ padding: "16px 18px", background: isLowest ? `${TC[theme]}18` : "white", border: `1.5px solid ${isLowest ? TC[theme] : C.g200}`, position: "relative" }}>
-                    {isLowest && (
-                      <span style={{ position: "absolute", top: -10, right: 10, fontFamily: "'Source Sans 3',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", background: TC[theme], color: "white", padding: "2px 8px" }}>
-                        Primary
-                      </span>
-                    )}
-                    <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: TC[theme], marginBottom: 6 }}>{theme}</p>
-                    <p style={{ fontFamily: "'Playfair Display',serif", fontSize: 28, fontWeight: 900, color: C.navy, lineHeight: 1, marginBottom: 4 }}>{score}</p>
-                    <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, color: C.g400 }}>out of 12</p>
-                  </div>
-                );
-              })}
+            <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(4,1fr)", gap: mobile ? 10 : 14 }}>
+              {Object.entries(scores)
+                .sort((a, b) => a[1] - b[1])
+                .map(([theme, score]) => {
+                  const isPrimary = theme === profile;
+                  const isSecondary = theme === secondaryProfile;
+                  const pct = Math.round((score / maxScore) * 100);
+                  return (
+                    <div key={theme} style={{ padding: "16px 16px 18px", background: isPrimary ? `${TC[theme]}14` : isSecondary ? `${TC[theme]}08` : "white", border: `1.5px solid ${isPrimary ? TC[theme] : isSecondary ? TC[theme] + "55" : C.g200}`, position: "relative" }}>
+                      {isPrimary && (
+                        <span style={{ position: "absolute", top: -10, right: 8, fontFamily: "'Source Sans 3',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", background: TC[theme], color: "white", padding: "2px 8px" }}>
+                          Primary
+                        </span>
+                      )}
+                      {isSecondary && !isPrimary && (
+                        <span style={{ position: "absolute", top: -10, right: 8, fontFamily: "'Source Sans 3',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", background: TC[theme] + "99", color: "white", padding: "2px 8px" }}>
+                          Secondary
+                        </span>
+                      )}
+                      <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: TC[theme], marginBottom: 6 }}>{theme}</p>
+                      <p style={{ fontFamily: "'Playfair Display',serif", fontSize: 26, fontWeight: 900, color: C.navy, lineHeight: 1, marginBottom: 2 }}>{score}</p>
+                      <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, color: C.g400, marginBottom: 10 }}>out of {maxScore}</p>
+                      {/* Score bar */}
+                      <div style={{ height: 3, background: C.g200, marginBottom: 10 }}>
+                        <div style={{ height: "100%", background: TC[theme], width: `${pct}%` }} />
+                      </div>
+                      <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, lineHeight: 1.65, color: C.g600 }}>
+                        {getScoreRead(theme, score)}
+                      </p>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>
 
-        {/* Profile body */}
+        {/* Primary profile body */}
         <div style={{ maxWidth: 760, margin: "0 auto", padding: mobile ? `48px ${px}` : `72px ${px}` }}>
+          <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.gold, marginBottom: 20 }}>
+            What This Profile Means
+          </p>
           {p.body.map((para, i) => (
             <p key={i} style={{ fontFamily: "'Libre Baskerville',serif", fontSize: mobile ? 16 : 17, lineHeight: 1.94, color: C.g800, marginBottom: "1.75em" }}>
               {para}
             </p>
           ))}
 
-          {/* Insight blockquote */}
           <div style={{ margin: "48px 0", padding: mobile ? "24px 24px" : "32px 40px", border: `2px solid ${C.gold}`, borderLeft: `4px solid ${C.gold}`, background: "#fdfbf7" }}>
             <p style={{ fontFamily: "'Playfair Display',serif", fontSize: mobile ? "clamp(17px,4.5vw,22px)" : "clamp(18px,2.5vw,24px)", fontStyle: "italic", color: C.navy, lineHeight: 1.55, margin: 0 }}>
               "{p.insight}"
             </p>
           </div>
 
-          {/* Start Here — essay cards */}
-          <div style={{ marginTop: 56 }}>
+          {/* Secondary profile card */}
+          {sp && (
+            <div style={{ marginBottom: 56 }}>
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.g400, marginBottom: 14 }}>
+                Secondary Configuration
+              </p>
+              <div style={{ background: "white", border: `1px solid ${C.g200}`, borderTop: `3px solid ${sp.color}`, padding: mobile ? "24px 22px" : "28px 32px" }}>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: sp.color, marginBottom: 8 }}>
+                  {secondaryProfile}
+                </p>
+                <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: mobile ? 20 : 22, fontWeight: 700, color: C.navy, marginBottom: 10, lineHeight: 1.2 }}>
+                  {sp.name}
+                </h3>
+                <p style={{ fontFamily: "'Libre Baskerville',serif", fontSize: mobile ? 15 : 16, fontStyle: "italic", color: C.g600, lineHeight: 1.7, marginBottom: 12 }}>
+                  {sp.tagline}
+                </p>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, lineHeight: 1.82, color: C.g600, margin: 0 }}>
+                  {SECONDARY_READS[secondaryProfile]}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Essay recommendations */}
+          <div style={{ marginTop: sp ? 0 : 56 }}>
             <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.gold, marginBottom: 8 }}>
               Start Here
             </p>
@@ -486,11 +620,9 @@ export default function SystemAuditPage({ mobile, px }) {
             </p>
             <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 14 }}>
               {relatedEssays.map(essay => (
-                <a
+                <div
                   key={essay.id}
-                  href="#"
-                  onClick={e => e.preventDefault()}
-                  style={{ display: "block", background: "white", border: `1px solid ${C.g200}`, padding: mobile ? "22px 20px" : "28px 26px", textDecoration: "none", transition: "all .26s", cursor: "default" }}
+                  style={{ background: "white", border: `1px solid ${C.g200}`, padding: mobile ? "22px 20px" : "28px 26px", transition: "all .26s" }}
                   onMouseOver={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,.08)"; e.currentTarget.style.borderColor = C.g400; }}
                   onMouseOut={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = C.g200; }}
                 >
@@ -506,7 +638,7 @@ export default function SystemAuditPage({ mobile, px }) {
                   <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 13, lineHeight: 1.75, color: C.g600, margin: 0 }}>
                     {essay.hook}
                   </p>
-                </a>
+                </div>
               ))}
             </div>
           </div>
@@ -522,26 +654,28 @@ export default function SystemAuditPage({ mobile, px }) {
                 Unsecured: Why Pressure Isn't the Problem
               </h3>
               <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: mobile ? 14 : 15, lineHeight: 1.85, color: "rgba(244,239,230,.6)", marginBottom: 28, maxWidth: 520 }}>
-                This audit surfaces one pattern. The book maps the full terrain — where these configurations come from, why they persist, and what it actually takes to change them.
+                This audit surfaces two patterns. The book maps the full terrain — where these configurations come from, why they persist, and what it actually takes to change them.
               </p>
-              <a
-                href="https://a.co/d/0dpaVYPc"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", padding: "15px 28px", background: C.gold, color: C.navy, border: "none", cursor: "pointer", textDecoration: "none", display: "inline-block", transition: "all .22s", minHeight: 48 }}
-                onMouseOver={e => { e.currentTarget.style.background = C.goldLight; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseOut={e => { e.currentTarget.style.background = C.gold; e.currentTarget.style.transform = "none"; }}
-              >
-                Get the Book
-              </a>
-              <button
-                onClick={restart}
-                style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", padding: "14px 28px", background: "transparent", color: "rgba(244,239,230,.5)", border: "1.5px solid rgba(244,239,230,.2)", cursor: "pointer", marginLeft: 12, transition: "all .22s", minHeight: 48 }}
-                onMouseOver={e => { e.currentTarget.style.color = C.cream; e.currentTarget.style.borderColor = "rgba(244,239,230,.5)"; }}
-                onMouseOut={e => { e.currentTarget.style.color = "rgba(244,239,230,.5)"; e.currentTarget.style.borderColor = "rgba(244,239,230,.2)"; }}
-              >
-                Retake Audit
-              </button>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                <a
+                  href="https://a.co/d/0dpaVYPc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", padding: "15px 28px", background: C.gold, color: C.navy, textDecoration: "none", display: "inline-block", transition: "all .22s", minHeight: 48 }}
+                  onMouseOver={e => { e.currentTarget.style.background = C.goldLight; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseOut={e => { e.currentTarget.style.background = C.gold; e.currentTarget.style.transform = "none"; }}
+                >
+                  Get the Book
+                </a>
+                <button
+                  onClick={restart}
+                  style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", padding: "14px 28px", background: "transparent", color: "rgba(244,239,230,.5)", border: "1.5px solid rgba(244,239,230,.2)", cursor: "pointer", transition: "all .22s", minHeight: 48 }}
+                  onMouseOver={e => { e.currentTarget.style.color = C.cream; e.currentTarget.style.borderColor = "rgba(244,239,230,.5)"; }}
+                  onMouseOut={e => { e.currentTarget.style.color = "rgba(244,239,230,.5)"; e.currentTarget.style.borderColor = "rgba(244,239,230,.2)"; }}
+                >
+                  Retake Audit
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -551,3 +685,18 @@ export default function SystemAuditPage({ mobile, px }) {
 
   return null;
 }
+
+const gateLabel = {
+  display: "block",
+  fontFamily: "'Source Sans 3',sans-serif",
+  fontSize: 11, fontWeight: 700, letterSpacing: ".12em",
+  textTransform: "uppercase", color: "#9e9489", marginBottom: 8,
+};
+
+const gateInput = {
+  width: "100%", padding: "14px 16px",
+  border: "1.5px solid #1e2f42",
+  background: "#162030", color: "#f4efe6",
+  fontFamily: "'Source Sans 3',sans-serif", fontSize: 15,
+  outline: "none", boxSizing: "border-box", borderRadius: 0, transition: "border-color .2s",
+};
