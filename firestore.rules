@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Essays: anyone can read published content,
+    // only authenticated users (admin) can write
+    match /essays/{essayId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+  }
+}
