@@ -325,12 +325,10 @@ export default function App() {
             {[["Writing","thinking"],["Ideas Lab","ideas"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
               <span key={p} className={`ni${page===p?" on":""}`} onClick={()=>go(p)}>{l}</span>
             ))}
-            <button className="btn-d" style={{ padding:"10px 20px", fontSize:11 }} onClick={()=>go("subscribe")}>Subscribe</button>
           </div>
 
-          {/* Mobile: subscribe + hamburger */}
+          {/* Mobile: hamburger */}
           <div className="mob-only" style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <button className="btn-d" style={{ padding:"9px 16px", fontSize:10 }} onClick={()=>go("subscribe")}>Subscribe</button>
             <button onClick={()=>setMenuOpen(!menuOpen)} style={{ background:"none", border:"none", cursor:"pointer", padding:"8px 4px", display:"flex", flexDirection:"column", gap:5, minWidth:44, minHeight:44, alignItems:"center", justifyContent:"center" }}>
               {[0,1,2].map(i => (
                 <span key={i} style={{ display:"block", width:22, height:1.5, background:C.navy, transition:"all .25s",
@@ -363,7 +361,6 @@ export default function App() {
         : page==="ideas"     ? <IdeasPage mobile={mobile} px={px}/>
         : page==="work"      ? <WorkPage mobile={mobile} px={px}/>
         : page==="about"     ? <AboutPage go={go} mobile={mobile} px={px}/>
-        : page==="subscribe" ? <SubscribePage/>
         : null}
 
       {/* ── FOOTER ── */}
@@ -714,7 +711,6 @@ function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
       </section>
 
       {/* ── EMAIL ── */}
-      <EmailCapture/>
     </div>
   );
 }
@@ -911,7 +907,6 @@ function IdeasPage({ mobile, px }) {
           </Reveal>
         ))}
       </div>
-      <div style={{ marginTop:64 }}><EmailCapture compact/></div>
     </div>
   );
 }
@@ -1007,7 +1002,6 @@ function AboutPage({ go, mobile, px }) {
             </p>
             <div style={{ display:"flex",gap:12,flexDirection: mobile ? "column" : "row" }}>
               <button className="btn-d mob-full" style={{ textAlign:"center" }} onClick={()=>go("thinking")}>Explore the Writing</button>
-              <button className="btn-o mob-full" style={{ textAlign:"center" }} onClick={()=>go("subscribe")}>Subscribe</button>
             </div>
           </div>
         </Reveal>
