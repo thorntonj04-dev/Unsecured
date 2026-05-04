@@ -1306,12 +1306,14 @@ function AboutPage({ go, mobile, px }) {
         <div style={{ position:"absolute",right:"4%",top:0,bottom:0,width:"26%",opacity:.06 }}>
           <CrackImage blendMode="screen" opacity={0.07} />
         </div>
-        <div style={{ maxWidth:1120,margin:"0 auto",display:"grid",gridTemplateColumns: mobile ? "1fr" : "1fr auto",gap: mobile ? 36 : 72,alignItems:"center",position:"relative",zIndex:2 }}>
+        <div style={{ maxWidth:1120,margin:"0 auto",display:"grid",gridTemplateColumns: mobile ? "1fr" : "1fr auto",gap: mobile ? 40 : 80,alignItems:"center",position:"relative",zIndex:2 }}>
           <div>
+            {/* Mobile portrait */}
             {mobile && (
-              <div style={{ marginBottom:28 }}>
-                <img src="/About.png" alt="John Thornton"
-                  style={{ width:120, height:120, objectFit:"cover", objectPosition:"center top", boxShadow:"0 8px 28px rgba(0,0,0,.45)", display:"block" }}
+              <div style={{ position:"relative", width:140, marginBottom:32 }}>
+                <div style={{ position:"absolute", top:-8, left:-8, width:"100%", height:"100%", border:`2px solid ${C.gold}`, opacity:0.5, zIndex:0 }} />
+                <img src="/About2.PNG" alt="John Thornton"
+                  style={{ position:"relative", zIndex:1, width:140, height:168, objectFit:"cover", objectPosition:"center top", display:"block", boxShadow:"0 12px 36px rgba(0,0,0,.5)" }}
                 />
               </div>
             )}
@@ -1320,10 +1322,22 @@ function AboutPage({ go, mobile, px }) {
             <p className="lb" style={{ fontSize: mobile ? 17 : 19,fontStyle:"italic",color:"rgba(244,239,230,.65)",marginBottom:16,lineHeight:1.65 }}>Cybersecurity professional. Author.<br/>Observer of invisible systems.</p>
             <p className="ss" style={{ fontSize:15,color:"rgba(244,239,230,.45)",lineHeight:1.8 }}>Writing about the intersection of how systems work and how people fail to see themselves as worth troubleshooting.</p>
           </div>
+
+          {/* Desktop portrait */}
           {!mobile && (
-            <img src="/About.png" alt="John Thornton"
-              style={{ width:280, height:340, objectFit:"cover", objectPosition:"center top", boxShadow:"-8px 12px 40px rgba(0,0,0,.55)", flexShrink:0, display:"block" }}
-            />
+            <div style={{ position:"relative", flexShrink:0, width:300 }}>
+              {/* Offset gold frame behind photo */}
+              <div style={{ position:"absolute", bottom:-14, right:-14, width:"100%", height:"100%", border:`2px solid ${C.gold}`, opacity:0.35, zIndex:0 }} />
+              {/* Photo */}
+              <img src="/About2.PNG" alt="John Thornton"
+                style={{ position:"relative", zIndex:1, display:"block", width:"100%", height:390, objectFit:"cover", objectPosition:"center top", boxShadow:"0 24px 64px rgba(0,0,0,.55)" }}
+              />
+              {/* Caption gradient overlay */}
+              <div style={{ position:"absolute", bottom:0, left:0, right:0, zIndex:2, background:"linear-gradient(to top, rgba(13,23,32,.92) 50%, transparent)", padding:"44px 20px 20px", pointerEvents:"none" }}>
+                <p className="ss" style={{ fontSize:10, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:C.gold, marginBottom:4 }}>John Thornton</p>
+                <p className="ss" style={{ fontSize:12, color:"rgba(244,239,230,.45)", letterSpacing:".06em" }}>Author · Cybersecurity</p>
+              </div>
+            </div>
           )}
         </div>
       </div>
