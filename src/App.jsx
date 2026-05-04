@@ -774,10 +774,13 @@ function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
 function ThinkingPage({ essays, setEssay, mobile, px }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(6);
   const searchLow = search.toLowerCase().trim();
   const filtered = essays
     .filter(e => filter === "All" || e.theme === filter)
     .filter(e => !searchLow || e.title.toLowerCase().includes(searchLow) || e.hook.toLowerCase().includes(searchLow));
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = filtered.length > visibleCount;
 
   return (
     <div style={{ maxWidth:1120, margin:"0 auto", padding:`56px ${px}` }}>
@@ -792,7 +795,7 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
         <input
           type="search"
           value={search}
-          onChange={e=>setSearch(e.target.value)}
+          onChange={e=>{ setSearch(e.target.value); setVisibleCount(6); }}
           placeholder="Search essays…"
           style={{ maxWidth:380, padding:"11px 16px", border:`1.5px solid ${C.g200}`, background:"white", fontFamily:"'Source Sans 3',sans-serif", fontSize:14, color:C.g800, outline:"none", borderRadius:0, width:"100%", transition:"border-color .2s" }}
           onFocus={e=>e.target.style.borderColor=C.navy}
@@ -803,13 +806,13 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
       <div style={{ overflowX:"auto", marginBottom:44, paddingBottom:4, scrollbarWidth:"none" }}>
         <div style={{ display:"flex", gap:8, width:"max-content" }}>
           {THEMES.map(t => (
-            <button key={t} onClick={()=>setFilter(t)} style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",padding:"8px 14px",background:filter===t?C.navy:"white",color:filter===t?C.cream:C.g600,border:`1px solid ${filter===t?C.navy:C.g200}`,cursor:"pointer",transition:"all .2s",whiteSpace:"nowrap",minHeight:40 }}>{t}</button>
+            <button key={t} onClick={()=>{ setFilter(t); setVisibleCount(6); }} style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",padding:"8px 14px",background:filter===t?C.navy:"white",color:filter===t?C.cream:C.g600,border:`1px solid ${filter===t?C.navy:C.g200}`,cursor:"pointer",transition:"all .2s",whiteSpace:"nowrap",minHeight:40 }}>{t}</button>
           ))}
         </div>
       </div>
       <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "2fr 1fr", gap: mobile ? 0 : 72, alignItems:"start" }}>
         <div>
-          {filtered.map((e,i) => (
+          {visible.map((e,i) => (
             <Reveal key={e.id} delay={i*.04}>
               <div className="erow" onClick={()=>setEssay(e)}>
                 <div style={{ display:"flex",gap:10,alignItems:"center",marginBottom:10,flexWrap:"wrap" }}>
@@ -821,6 +824,18 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
               </div>
             </Reveal>
           ))}
+          {hasMore && (
+            <div style={{ paddingTop:32, paddingBottom:8 }}>
+              <button
+                onClick={()=>setVisibleCount(c=>c+6)}
+                style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",padding:"14px 32px",background:"white",color:C.navy,border:`1.5px solid ${C.navy}`,cursor:"pointer",transition:"all .22s" }}
+                onMouseOver={e=>{e.currentTarget.style.background=C.navy;e.currentTarget.style.color=C.cream}}
+                onMouseOut={e=>{e.currentTarget.style.background="white";e.currentTarget.style.color=C.navy}}
+              >
+                Load More ({filtered.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
         </div>
         {!mobile && (
           <Reveal>
