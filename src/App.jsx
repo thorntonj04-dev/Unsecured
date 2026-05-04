@@ -446,7 +446,6 @@ export default function App() {
             <div style={{ width:"100%",height:1,background:`linear-gradient(to right, transparent, ${C.navyMid}, transparent)`,marginBottom:24 }}/>
             <div style={{ display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10 }}>
               <p className="ss" style={{ fontSize:12,color:C.g600 }}>© 2026 John Thornton. All rights reserved.</p>
-              <p className="ss" style={{ fontSize:12,color:C.g600 }}>Ideas Lab powered by NotebookLM</p>
             </div>
           </div>
         </footer>
