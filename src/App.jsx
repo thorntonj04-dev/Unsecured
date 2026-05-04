@@ -259,6 +259,7 @@ export default function App() {
   const scrollY = useScrollY();
   const mobile = useMobile();
   const scrolled = scrollY > 48;
+  const scrollTargetRef = useRef(null);
 
   useEffect(() => {
     fetchEssays().then(data => { if (data && data.length) setEssays(data); });
@@ -278,8 +279,12 @@ export default function App() {
     }
   }, [essays]);
 
-  useEffect(() => { window.scrollTo({ top:0, behavior:"smooth" }); }, [page, essay]);
+  useEffect(() => {
+    if (scrollTargetRef.current) return;
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }, [page, essay]);
   const go = (p) => { setPage(p); setEssay(null); setMenuOpen(false); window.history.replaceState(null, "", window.location.pathname); };
+  const goToIdeas = () => { scrollTargetRef.current = "distilled-ideas"; go("thinking"); };
 
   // Global styles
   const globalStyles = `
@@ -392,7 +397,7 @@ export default function App() {
       {essay
         ? <EssayPage essay={essay} all={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
         : page==="home"      ? <HomePage go={go} essays={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
-        : page==="thinking"  ? <ThinkingPage essays={essays} setEssay={setEssay} mobile={mobile} px={px}/>
+        : page==="thinking"  ? <ThinkingPage essays={essays} setEssay={setEssay} mobile={mobile} px={px} scrollTargetRef={scrollTargetRef}/>
         : page==="audit"     ? <SystemAuditPage mobile={mobile} px={px} essays={essays}/>
         : page==="cohort"    ? <CohortPage mobile={mobile} px={px}/>
         : page==="work"      ? <WorkPage mobile={mobile} px={px}/>
@@ -556,7 +561,7 @@ function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
             {[
               { icon:"◈", label:"Start with the Book", sub:"Something brought you here. The book is where this thinking lives in full — every pattern named, every framework grounded in real experience.", action:()=>{}, badge:"The full picture" },
               { icon:"◇", label:"Explore the Writing", sub:"If something specific is pulling at you — pressure, urgency, the rules you never chose — start there. Each piece is a different angle on the same question.", action:()=>go("thinking"), badge:"Original thinking" },
-              { icon:"⊞", label:"A Quick Shift", sub:"Single concepts and reframes. The kind of thing that takes two minutes to read and stays with you longer than it should.", action:()=>go("ideas"), badge:"Ideas Lab" },
+              { icon:"⊞", label:"A Quick Shift", sub:"Single concepts and reframes. The kind of thing that takes two minutes to read and stays with you longer than it should.", action:goToIdeas, badge:"Ideas Lab" },
             ].map(({ icon, label, sub, action, badge }, i) => (
               <div key={label} onClick={action} style={{ padding: mobile ? "24px 0" : "36px 28px",
                 borderTop: mobile ? `1px solid ${C.navyMid}` : "none",
@@ -771,10 +776,19 @@ function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // THINKING PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
-function ThinkingPage({ essays, setEssay, mobile, px }) {
+function ThinkingPage({ essays, setEssay, mobile, px, scrollTargetRef }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(6);
+
+  useEffect(() => {
+    if (scrollTargetRef?.current === "distilled-ideas") {
+      scrollTargetRef.current = null;
+      setTimeout(() => {
+        document.getElementById("distilled-ideas")?.scrollIntoView({ behavior:"smooth", block:"start" });
+      }, 80);
+    }
+  }, []);
   const searchLow = search.toLowerCase().trim();
   const filtered = essays
     .filter(e => filter === "All" || e.theme === filter)
@@ -862,7 +876,7 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
           .filter(idea => !searchLow || idea.title.toLowerCase().includes(searchLow) || idea.body.toLowerCase().includes(searchLow));
         if (filteredIdeas.length === 0) return null;
         return (
-          <div style={{ marginTop:80, paddingTop:64, borderTop:`1px solid ${C.g200}` }}>
+          <div id="distilled-ideas" style={{ marginTop:80, paddingTop:64, borderTop:`1px solid ${C.g200}` }}>
             <Reveal style={{ marginBottom:36 }}>
               <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".2em",textTransform:"uppercase",color:C.gold,marginBottom:10 }}>Distilled Ideas</p>
               <h2 className="pf" style={{ fontSize:"clamp(22px,4vw,32px)",fontWeight:700,color:C.navy,marginBottom:12,lineHeight:1.1 }}>Concepts &amp; Reframes</h2>
