@@ -357,7 +357,7 @@ export default function App() {
 
           {/* Desktop nav */}
           <div className="desk-only" style={{ display:"flex", gap:32, alignItems:"center" }}>
-            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+            {[["Home","home"],["Writing","thinking"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
               <span key={p} className={`ni${page===p?" on":""}`} onClick={()=>go(p)}>{l}</span>
             ))}
           </div>
@@ -377,7 +377,7 @@ export default function App() {
         {/* Mobile dropdown menu */}
         {menuOpen && (
           <div style={{ background:"white", borderTop:`1px solid ${C.g200}`, padding:"8px 0", boxShadow:`0 8px 24px rgba(0,0,0,.1)` }}>
-            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+            {[["Home","home"],["Writing","thinking"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
               <div key={p} onClick={()=>go(p)} style={{ padding:"16px 24px", borderBottom:`1px solid ${C.g200}`, cursor:"pointer", transition:"background .15s" }}
                 onMouseOver={e=>e.currentTarget.style.background=C.g100}
                 onMouseOut={e=>e.currentTarget.style.background="white"}>
@@ -393,12 +393,14 @@ export default function App() {
         ? <EssayPage essay={essay} all={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
         : page==="home"      ? <HomePage go={go} essays={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
         : page==="thinking"  ? <ThinkingPage essays={essays} setEssay={setEssay} mobile={mobile} px={px}/>
-        : page==="ideas"     ? <IdeasPage mobile={mobile} px={px}/>
         : page==="audit"     ? <SystemAuditPage mobile={mobile} px={px} essays={essays}/>
         : page==="cohort"    ? <CohortPage mobile={mobile} px={px}/>
         : page==="work"      ? <WorkPage mobile={mobile} px={px}/>
         : page==="about"     ? <AboutPage go={go} mobile={mobile} px={px}/>
         : null}
+
+      {/* ── IDEAS TICKER ── */}
+      <IdeasMarquee />
 
       {/* ── FOOTER ── */}
       {!essay && (
@@ -425,7 +427,7 @@ export default function App() {
               </div>
               <div>
                 <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",color:C.gold,marginBottom:16 }}>Navigate</p>
-                {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+                {[["Home","home"],["Writing","thinking"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
                   <p key={p} onClick={()=>go(p)} className="ss" style={{ fontSize:14,color:C.g400,marginBottom:10,cursor:"pointer",transition:"color .2s" }}
                     onMouseOver={e=>e.target.style.color=C.cream} onMouseOut={e=>e.target.style.color=C.g400}>{l}</p>
                 ))}
@@ -837,6 +839,39 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
           </Reveal>
         )}
       </div>
+
+      {/* ── DISTILLED IDEAS ── */}
+      {(() => {
+        const filteredIdeas = IDEAS
+          .filter(idea => filter === "All" || idea.theme === filter)
+          .filter(idea => !searchLow || idea.title.toLowerCase().includes(searchLow) || idea.body.toLowerCase().includes(searchLow));
+        if (filteredIdeas.length === 0) return null;
+        return (
+          <div style={{ marginTop:80, paddingTop:64, borderTop:`1px solid ${C.g200}` }}>
+            <Reveal style={{ marginBottom:36 }}>
+              <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".2em",textTransform:"uppercase",color:C.gold,marginBottom:10 }}>Distilled Ideas</p>
+              <h2 className="pf" style={{ fontSize:"clamp(22px,4vw,32px)",fontWeight:700,color:C.navy,marginBottom:12,lineHeight:1.1 }}>Concepts &amp; Reframes</h2>
+              <p className="ss" style={{ fontSize:14,lineHeight:1.85,color:C.g600,maxWidth:480 }}>Quick concepts. Two minutes to read. Designed to shift one thing about how you're seeing a situation.</p>
+            </Reveal>
+            <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fit,minmax(290px,1fr))", gap:14 }}>
+              {filteredIdeas.map((idea,i) => (
+                <Reveal key={idea.id} delay={i*.03}>
+                  <div style={{ background:"white",border:`1px solid ${C.g200}`,padding: mobile ? "24px 20px" : "28px 30px",transition:"all .26s" }}
+                    onMouseOver={e=>{e.currentTarget.style.borderColor=C.gold;e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 22px rgba(0,0,0,.07)"}}
+                    onMouseOut={e=>{e.currentTarget.style.borderColor=C.g200;e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none"}}>
+                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14 }}>
+                      <span className="ss" style={{ fontSize:10,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",padding:"4px 10px",background:`${TC[idea.theme]}14`,color:TC[idea.theme],border:`1px solid ${TC[idea.theme]}30` }}>{idea.theme}</span>
+                      <span className="ss" style={{ fontSize:9.5,color:C.g400,letterSpacing:".1em",textTransform:"uppercase",fontWeight:700,padding:"4px 10px",border:`1px solid ${C.g200}` }}>{idea.type}</span>
+                    </div>
+                    <h3 className="pf" style={{ fontSize: mobile ? 17 : 18,fontWeight:700,color:C.navy,marginBottom:10,lineHeight:1.3 }}>{idea.title}</h3>
+                    <p className="ss" style={{ fontSize:13,lineHeight:1.85,color:C.g600 }}>{idea.body}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -980,42 +1015,17 @@ const IDEAS = [
   {id:12,theme:"Reconfiguration",type:"Principle",title:"Authority, Not Willpower",body:"The goal isn't suppressing urgency through discipline. It's withdrawing the unquestioned authority urgency inherited."},
 ];
 
-function IdeasPage({ mobile, px }) {
-  const [filter, setFilter] = useState("All");
-  const filtered = filter==="All" ? IDEAS : IDEAS.filter(i=>i.theme===filter);
+// ─── IDEAS MARQUEE ────────────────────────────────────────────────────────────
+function IdeasMarquee() {
+  const items = [...IDEAS, ...IDEAS];
   return (
-    <div style={{ maxWidth:1120, margin:"0 auto", padding:`56px ${px}` }}>
-      <Reveal style={{ marginBottom:48 }}>
-        <div style={{ width:36,height:2,background:C.gold,marginBottom:18 }}/>
-        <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".2em",textTransform:"uppercase",color:C.gold,marginBottom:10 }}>Distilled Thinking</p>
-        <h1 className="pf" style={{ fontSize:"clamp(32px,7vw,56px)",fontWeight:900,color:C.navy,lineHeight:1.05,marginBottom:20,letterSpacing:"-.02em" }}>Ideas Lab</h1>
-        <p className="ss" style={{ fontSize:16,lineHeight:1.85,color:C.g600,maxWidth:520,marginBottom:28 }}>Concepts, distinctions, and frameworks. Quick to read. Designed to shift one thing about how you're seeing a situation.</p>
-        <div style={{ background:C.navy,padding:"18px 24px",display:"inline-flex",gap:14,alignItems:"center",borderLeft:`3px solid ${C.gold}` }}>
-          <div style={{ width:7,height:7,borderRadius:"50%",background:C.gold,flexShrink:0 }}/>
-          <p className="ss" style={{ fontSize:13,color:"rgba(244,239,230,.7)" }}>Audio, briefings, and deep dives generated via <em style={{ color:C.goldLight }}>NotebookLM</em> — coming soon.</p>
-        </div>
-      </Reveal>
-      <div style={{ overflowX:"auto",marginBottom:44,paddingBottom:4,scrollbarWidth:"none" }}>
-        <div style={{ display:"flex",gap:8,width:"max-content" }}>
-          {THEMES.map(t=>(
-            <button key={t} onClick={()=>setFilter(t)} style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",padding:"8px 14px",background:filter===t?C.navy:"white",color:filter===t?C.cream:C.g600,border:`1px solid ${filter===t?C.navy:C.g200}`,cursor:"pointer",transition:"all .2s",whiteSpace:"nowrap",minHeight:40 }}>{t}</button>
-          ))}
-        </div>
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fit,minmax(300px,1fr))", gap:14 }}>
-        {filtered.map((idea,i) => (
-          <Reveal key={idea.id} delay={i*.04}>
-            <div style={{ background:"white",border:`1px solid ${C.g200}`,padding: mobile ? "24px 20px" : "28px 30px",transition:"all .26s" }}
-              onMouseOver={e=>{e.currentTarget.style.borderColor=C.gold;e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 22px rgba(0,0,0,.07)"}}
-              onMouseOut={e=>{e.currentTarget.style.borderColor=C.g200;e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none"}}>
-              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14 }}>
-                <span className="ss" style={{ fontSize:10,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",padding:"4px 10px",background:`${TC[idea.theme]}14`,color:TC[idea.theme],border:`1px solid ${TC[idea.theme]}30` }}>{idea.theme}</span>
-                <span className="ss" style={{ fontSize:9.5,color:C.g400,letterSpacing:".1em",textTransform:"uppercase",fontWeight:700,padding:"4px 10px",border:`1px solid ${C.g200}` }}>{idea.type}</span>
-              </div>
-              <h3 className="pf" style={{ fontSize: mobile ? 18 : 19,fontWeight:700,color:C.navy,marginBottom:12,lineHeight:1.3 }}>{idea.title}</h3>
-              <p className="ss" style={{ fontSize:14,lineHeight:1.85,color:C.g600 }}>{idea.body}</p>
-            </div>
-          </Reveal>
+    <div style={{ background:C.navyMid, borderTop:`1px solid ${C.navyLight}`, overflow:"hidden", padding:"13px 0" }}>
+      <style>{`@keyframes iq{from{transform:translateX(0)}to{transform:translateX(-50%)}} .iq-t{display:flex;width:max-content;animation:iq 80s linear infinite}.iq-t:hover{animation-play-state:paused}`}</style>
+      <div className="iq-t">
+        {items.map((idea, i) => (
+          <span key={i} style={{ fontFamily:"'Source Sans 3',sans-serif", fontSize:10.5, fontWeight:600, letterSpacing:".15em", textTransform:"uppercase", whiteSpace:"nowrap", padding:"0 28px", color: i % 2 === 0 ? C.goldLight : "rgba(244,239,230,.22)" }}>
+            {idea.title}{i % 2 !== 0 ? " ·" : ""}
+          </span>
         ))}
       </div>
     </div>
