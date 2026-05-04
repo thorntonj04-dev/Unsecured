@@ -1306,14 +1306,25 @@ function AboutPage({ go, mobile, px }) {
         <div style={{ position:"absolute",right:"4%",top:0,bottom:0,width:"26%",opacity:.06 }}>
           <CrackImage blendMode="screen" opacity={0.07} />
         </div>
-        <div style={{ maxWidth:1120,margin:"0 auto",display:"grid",gridTemplateColumns: mobile ? "1fr" : "1fr auto",gap: mobile ? 32 : 64,alignItems:"center",position:"relative",zIndex:2 }}>
+        <div style={{ maxWidth:1120,margin:"0 auto",display:"grid",gridTemplateColumns: mobile ? "1fr" : "1fr auto",gap: mobile ? 36 : 72,alignItems:"center",position:"relative",zIndex:2 }}>
           <div>
+            {mobile && (
+              <div style={{ marginBottom:28 }}>
+                <img src="/About.png" alt="John Thornton"
+                  style={{ width:120, height:120, objectFit:"cover", objectPosition:"center top", boxShadow:"0 8px 28px rgba(0,0,0,.45)", display:"block" }}
+                />
+              </div>
+            )}
             <div style={{ width:36,height:2,background:C.gold,marginBottom:20 }}/>
             <h1 className="pf" style={{ fontSize: mobile ? "clamp(32px,9vw,52px)" : "clamp(36px,5.5vw,60px)",fontWeight:900,color:C.cream,marginBottom:18,lineHeight:1.05,letterSpacing:"-.02em" }}>John Thornton</h1>
             <p className="lb" style={{ fontSize: mobile ? 17 : 19,fontStyle:"italic",color:"rgba(244,239,230,.65)",marginBottom:16,lineHeight:1.65 }}>Cybersecurity professional. Author.<br/>Observer of invisible systems.</p>
             <p className="ss" style={{ fontSize:15,color:"rgba(244,239,230,.45)",lineHeight:1.8 }}>Writing about the intersection of how systems work and how people fail to see themselves as worth troubleshooting.</p>
           </div>
-          {!mobile && <BookCoverDark size={240}/>}
+          {!mobile && (
+            <img src="/About.png" alt="John Thornton"
+              style={{ width:280, height:340, objectFit:"cover", objectPosition:"center top", boxShadow:"-8px 12px 40px rgba(0,0,0,.55)", flexShrink:0, display:"block" }}
+            />
+          )}
         </div>
       </div>
       <div style={{ maxWidth:760,margin:"0 auto",padding:`64px ${px}` }}>
