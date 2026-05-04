@@ -396,7 +396,7 @@ export default function App() {
       {/* ── PAGES ── */}
       {essay
         ? <EssayPage essay={essay} all={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
-        : page==="home"      ? <HomePage go={go} essays={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
+        : page==="home"      ? <HomePage go={go} goToIdeas={goToIdeas} essays={essays} setEssay={setEssay} scrollY={scrollY} mobile={mobile} px={px}/>
         : page==="thinking"  ? <ThinkingPage essays={essays} setEssay={setEssay} mobile={mobile} px={px} scrollTargetRef={scrollTargetRef}/>
         : page==="audit"     ? <SystemAuditPage mobile={mobile} px={px} essays={essays}/>
         : page==="cohort"    ? <CohortPage mobile={mobile} px={px}/>
@@ -457,7 +457,7 @@ export default function App() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // HOME PAGE — mobile-first, clear visitor flow
 // ═══════════════════════════════════════════════════════════════════════════════
-function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
+function HomePage({ go, goToIdeas, essays, setEssay, scrollY, mobile, px }) {
   // Parallax only on desktop — disabled on mobile to prevent scroll conflict
   const parallax = mobile ? 0 : scrollY * 0.15;
 
