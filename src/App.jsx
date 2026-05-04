@@ -1335,7 +1335,7 @@ function AboutPage({ go, mobile, px }) {
               {/* Caption gradient overlay */}
               <div style={{ position:"absolute", bottom:0, left:0, right:0, zIndex:2, background:"linear-gradient(to top, rgba(13,23,32,.92) 50%, transparent)", padding:"44px 20px 20px", pointerEvents:"none" }}>
                 <p className="ss" style={{ fontSize:10, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:C.gold, marginBottom:4 }}>John Thornton</p>
-                <p className="ss" style={{ fontSize:12, color:"rgba(244,239,230,.45)", letterSpacing:".06em" }}>Author · Cybersecurity</p>
+                <p className="ss" style={{ fontSize:12, color:"rgba(244,239,230,.45)", letterSpacing:".06em" }}>Author</p>
               </div>
             </div>
           )}
