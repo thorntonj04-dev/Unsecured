@@ -23,6 +23,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 2,
+    published: false,
     theme: "Pressure",
     readTime: "5 min",
     title: "Normal Is a Disguise",
@@ -54,6 +55,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 4,
+    published: false,
     theme: "Urgency",
     readTime: "5 min",
     title: "Speed Is Not the Same as Importance",
@@ -85,6 +87,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 6,
+    published: false,
     theme: "Internal Rules",
     readTime: "5 min",
     title: "When Identity Gets Tied to Output",
@@ -100,6 +103,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 7,
+    published: false,
     theme: "Internal Rules",
     readTime: "6 min",
     title: "Why Rest Doesn't Fix It",
@@ -130,6 +134,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 9,
+    published: false,
     theme: "Reconfiguration",
     readTime: "5 min",
     title: "Baselines Don't Drift — They're Pulled",
@@ -145,6 +150,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 10,
+    published: false,
     theme: "Reconfiguration",
     readTime: "6 min",
     title: "What It Means to Live with Margin",
@@ -164,6 +170,7 @@ export const LOCAL_ESSAYS = [
   // ── PRESSURE ──────────────────────────────────────────────────────────────────
   {
     id: 11,
+    published: false,
     theme: "Pressure",
     readTime: "7 min",
     title: "The Body Noticed First",
@@ -184,6 +191,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 12,
+    published: false,
     theme: "Pressure",
     readTime: "7 min",
     title: "What You Built Out of Endurance",
@@ -204,6 +212,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 13,
+    published: false,
     theme: "Pressure",
     readTime: "6 min",
     title: "The Cost of Being the Capable One",
@@ -224,6 +233,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 14,
+    published: false,
     theme: "Pressure",
     readTime: "7 min",
     title: "How Pressure Taught Me the Wrong Lesson",
@@ -246,6 +256,7 @@ export const LOCAL_ESSAYS = [
   // ── URGENCY ───────────────────────────────────────────────────────────────────
   {
     id: 15,
+    published: false,
     theme: "Urgency",
     readTime: "7 min",
     title: "The Fire Drill You Agreed To",
@@ -265,6 +276,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 16,
+    published: false,
     theme: "Urgency",
     readTime: "6 min",
     title: "What You Traded for Speed",
@@ -284,6 +296,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 17,
+    published: false,
     theme: "Urgency",
     readTime: "6 min",
     title: "When Authority Shortcircuits Judgment",
@@ -303,6 +316,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 18,
+    published: false,
     theme: "Urgency",
     readTime: "6 min",
     title: "The Rule Underneath the Habit",
@@ -324,6 +338,7 @@ export const LOCAL_ESSAYS = [
   // ── INTERNAL RULES ────────────────────────────────────────────────────────────
   {
     id: 19,
+    published: false,
     theme: "Internal Rules",
     readTime: "7 min",
     title: "When the Fixer Becomes the Fix",
@@ -344,6 +359,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 20,
+    published: false,
     theme: "Internal Rules",
     readTime: "7 min",
     title: "The Rules That Run Without Permission",
@@ -364,6 +380,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 21,
+    published: false,
     theme: "Internal Rules",
     readTime: "6 min",
     title: "The Illusion of Not Breaking",
@@ -383,6 +400,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 22,
+    published: false,
     theme: "Internal Rules",
     readTime: "6 min",
     title: "What Capability Hides",
@@ -404,6 +422,7 @@ export const LOCAL_ESSAYS = [
   // ── RECONFIGURATION ───────────────────────────────────────────────────────────
   {
     id: 23,
+    published: false,
     theme: "Reconfiguration",
     readTime: "7 min",
     title: "What Changed While You Were Surviving",
@@ -423,6 +442,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 24,
+    published: false,
     theme: "Reconfiguration",
     readTime: "7 min",
     title: "Resilience Is Not the Same as Recovery",
@@ -442,6 +462,7 @@ export const LOCAL_ESSAYS = [
   },
   {
     id: 25,
+    published: false,
     theme: "Reconfiguration",
     readTime: "7 min",
     title: "The Permission Nobody Gives You",
