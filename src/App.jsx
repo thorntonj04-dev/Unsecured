@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { LOCAL_ESSAYS } from "./essays";
-import { fetchEssays, submitInquiry } from "./firebase";
+import { fetchEssays, submitInquiry, subscribeNewsletter } from "./firebase";
 import SystemAuditPage from "./SystemAuditPage";
 import CohortPage from "./CohortPage";
 
@@ -163,19 +163,14 @@ function CrackPanel({
 function BookCoverDark({ size = 220 }) {
   const w = Math.round(size * 0.7); const h = size;
   return (
-    <div style={{ width:w, height:h, background:`linear-gradient(155deg,${C.navyLight},${C.navy})`,
-      position:"relative", boxShadow:`-8px 12px 40px rgba(0,0,0,.55)`, overflow:"hidden",
-      flexShrink:0, transition:"transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease" }}
+    <div style={{ width:w, height:h, flexShrink:0, boxShadow:`-8px 12px 40px rgba(0,0,0,.55)`,
+      transition:"transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease", overflow:"hidden" }}
       onMouseOver={e=>{e.currentTarget.style.transform="translateY(-6px) rotate(-1deg)";e.currentTarget.style.boxShadow="-12px 20px 48px rgba(0,0,0,.65)"}}
       onMouseOut={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="-8px 12px 40px rgba(0,0,0,.55)"}}>
-      <div style={{ position:"absolute",top:"43%",left:0,right:0,height:Math.round(h*.034),background:"linear-gradient(180deg,#5c3d1e,#8b6535 35%,#7a5a30 65%,#5c3d1e)",opacity:.85 }}/>
-      <div style={{ position:"absolute",top:"6%",left:0,right:0,textAlign:"center",padding:`0 ${Math.round(w*.1)}px` }}>
-        <div style={{ fontFamily:"'Playfair Display',serif",fontSize:Math.round(w*.128),fontWeight:700,letterSpacing:".03em",color:C.creamDark,lineHeight:1.05,marginBottom:Math.round(h*.016) }}>UNSECURED</div>
-        <div style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:Math.round(w*.054),color:C.goldLight,letterSpacing:".1em",textTransform:"uppercase",lineHeight:1.45 }}>Why Pressure<br/>Isn't the Problem</div>
-      </div>
-      <div style={{ position:"absolute",bottom:"6%",left:0,right:0,textAlign:"center" }}>
-        <div style={{ fontFamily:"'Playfair Display',serif",fontSize:Math.round(w*.094),color:C.creamDark,letterSpacing:".02em",lineHeight:1.25 }}>JOHN<br/>THORNTON</div>
-      </div>
+      <img src="/book-cover.jpg" alt="Unsecured: Why Pressure Isn't the Problem by John Thornton"
+        style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+        onError={e => { e.target.style.display = "none"; }}
+      />
     </div>
   );
 }
@@ -201,6 +196,21 @@ function Marquee() {
 function EmailCapture({ compact = false }) {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubscribe() {
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      await subscribeNewsletter(email.trim());
+    } catch (err) {
+      console.warn("subscribeNewsletter failed:", err.message);
+    } finally {
+      setLoading(false);
+      setDone(true);
+    }
+  }
+
   return (
     <section style={{ background:compact?"transparent":C.creamDark, padding:compact?"0":"64px 24px", borderTop:compact?"none":`1px solid ${C.g200}` }}>
       <Reveal>
@@ -214,11 +224,21 @@ function EmailCapture({ compact = false }) {
             <p style={{ fontFamily:"'Source Sans 3',sans-serif", fontSize:15, color:C.g600, padding:"16px 20px", background:"white", border:`1px solid ${C.g200}` }}>You're subscribed.</p>
           ) : (
             <div style={{ display:"flex", gap:8, maxWidth:380, margin:compact?"14px auto 0":"0 auto", flexWrap:"wrap" }}>
-              <input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="Your email" style={{ flex:1, minWidth:180 }}/>
-              <button onClick={()=>email&&setDone(true)} style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",padding:"14px 22px",background:C.navy,color:C.cream,border:"none",cursor:"pointer",whiteSpace:"nowrap",transition:"all .22s" }}
-                onMouseOver={e=>e.currentTarget.style.background=C.navyLight}
-                onMouseOut={e=>e.currentTarget.style.background=C.navy}>
-                Subscribe
+              <input
+                value={email}
+                onChange={e=>setEmail(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&handleSubscribe()}
+                type="email"
+                placeholder="Your email"
+                style={{ flex:1, minWidth:180 }}
+              />
+              <button
+                onClick={handleSubscribe}
+                disabled={loading}
+                style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",padding:"14px 22px",background:loading?C.navyLight:C.navy,color:C.cream,border:"none",cursor:loading?"not-allowed":"pointer",whiteSpace:"nowrap",transition:"all .22s",opacity:loading?0.7:1 }}
+                onMouseOver={e=>{ if(!loading) e.currentTarget.style.background=C.navyLight; }}
+                onMouseOut={e=>{ if(!loading) e.currentTarget.style.background=C.navy; }}>
+                {loading ? "…" : "Subscribe"}
               </button>
             </div>
           )}
@@ -244,8 +264,22 @@ export default function App() {
     fetchEssays().then(data => { if (data && data.length) setEssays(data); });
   }, []);
 
+  // Deep link: #essay-{id} or #audit
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith("#essay-")) {
+      const id = parseInt(hash.replace("#essay-", ""), 10);
+      if (!isNaN(id)) {
+        const found = essays.find(e => e.id === id);
+        if (found) setEssay(found);
+      }
+    } else if (hash === "#audit") {
+      setPage("audit");
+    }
+  }, [essays]);
+
   useEffect(() => { window.scrollTo({ top:0, behavior:"smooth" }); }, [page, essay]);
-  const go = (p) => { setPage(p); setEssay(null); setMenuOpen(false); };
+  const go = (p) => { setPage(p); setEssay(null); setMenuOpen(false); window.history.replaceState(null, "", window.location.pathname); };
 
   // Global styles
   const globalStyles = `
@@ -323,7 +357,7 @@ export default function App() {
 
           {/* Desktop nav */}
           <div className="desk-only" style={{ display:"flex", gap:32, alignItems:"center" }}>
-            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["The Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
               <span key={p} className={`ni${page===p?" on":""}`} onClick={()=>go(p)}>{l}</span>
             ))}
           </div>
@@ -343,7 +377,7 @@ export default function App() {
         {/* Mobile dropdown menu */}
         {menuOpen && (
           <div style={{ background:"white", borderTop:`1px solid ${C.g200}`, padding:"8px 0", boxShadow:`0 8px 24px rgba(0,0,0,.1)` }}>
-            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["The Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+            {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
               <div key={p} onClick={()=>go(p)} style={{ padding:"16px 24px", borderBottom:`1px solid ${C.g200}`, cursor:"pointer", transition:"background .15s" }}
                 onMouseOver={e=>e.currentTarget.style.background=C.g100}
                 onMouseOut={e=>e.currentTarget.style.background="white"}>
@@ -378,7 +412,7 @@ export default function App() {
               </div>
               <div>
                 <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",color:C.gold,marginBottom:16 }}>Navigate</p>
-                {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["The Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
+                {[["Home","home"],["Writing","thinking"],["Ideas Lab","ideas"],["The Audit","audit"],["Reconfiguration Lab","cohort"],["Work With Me","work"],["About","about"]].map(([l,p])=>(
                   <p key={p} onClick={()=>go(p)} className="ss" style={{ fontSize:14,color:C.g400,marginBottom:10,cursor:"pointer",transition:"color .2s" }}
                     onMouseOver={e=>e.target.style.color=C.cream} onMouseOut={e=>e.target.style.color=C.g400}>{l}</p>
                 ))}
@@ -714,6 +748,7 @@ function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
       </section>
 
       {/* ── EMAIL ── */}
+      <EmailCapture />
     </div>
   );
 }
@@ -723,7 +758,12 @@ function HomePage({ go, essays, setEssay, scrollY, mobile, px }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 function ThinkingPage({ essays, setEssay, mobile, px }) {
   const [filter, setFilter] = useState("All");
-  const filtered = filter==="All" ? essays : essays.filter(e=>e.theme===filter);
+  const [search, setSearch] = useState("");
+  const searchLow = search.toLowerCase().trim();
+  const filtered = essays
+    .filter(e => filter === "All" || e.theme === filter)
+    .filter(e => !searchLow || e.title.toLowerCase().includes(searchLow) || e.hook.toLowerCase().includes(searchLow));
+
   return (
     <div style={{ maxWidth:1120, margin:"0 auto", padding:`56px ${px}` }}>
       <Reveal style={{ marginBottom:48 }}>
@@ -732,6 +772,18 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
         <h1 className="pf" style={{ fontSize:"clamp(32px,7vw,56px)",fontWeight:900,color:C.navy,lineHeight:1.05,marginBottom:20,letterSpacing:"-.02em" }}>Thinking</h1>
         <p className="ss" style={{ fontSize:16,lineHeight:1.85,color:C.g600,maxWidth:520 }}>Extended explorations on the same territory as the book — not lessons, not summaries. Different angles on the same question: what's actually running underneath the way you operate.</p>
       </Reveal>
+      {/* Search */}
+      <div style={{ marginBottom:20 }}>
+        <input
+          type="search"
+          value={search}
+          onChange={e=>setSearch(e.target.value)}
+          placeholder="Search essays…"
+          style={{ maxWidth:380, padding:"11px 16px", border:`1.5px solid ${C.g200}`, background:"white", fontFamily:"'Source Sans 3',sans-serif", fontSize:14, color:C.g800, outline:"none", borderRadius:0, width:"100%", transition:"border-color .2s" }}
+          onFocus={e=>e.target.style.borderColor=C.navy}
+          onBlur={e=>e.target.style.borderColor=C.g200}
+        />
+      </div>
       {/* Scrollable filters on mobile */}
       <div style={{ overflowX:"auto", marginBottom:44, paddingBottom:4, scrollbarWidth:"none" }}>
         <div style={{ display:"flex", gap:8, width:"max-content" }}>
@@ -780,6 +832,27 @@ function ThinkingPage({ essays, setEssay, mobile, px }) {
 // ESSAY PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 function EssayPage({ essay, all, setEssay, scrollY, mobile, px }) {
+  const [copied, setCopied] = useState(false);
+
+  function shareUrl() {
+    return window.location.origin + "/#essay-" + essay.id;
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(shareUrl()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
+  function shareTwitter() {
+    const text = `"${essay.hook}" — ${essay.title} by @JohnThornton`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl())}`, "_blank", "noopener,noreferrer");
+  }
+
+  function shareLinkedIn() {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl())}`, "_blank", "noopener,noreferrer");
+  }
   const related = essay.related.map(id=>all.find(e=>e.id===id)).filter(Boolean);
   const totalH = typeof document!=="undefined" ? document.body?.scrollHeight - window.innerHeight : 1;
   const prog = Math.min(100, (scrollY / Math.max(totalH, 1)) * 100);
@@ -849,7 +922,29 @@ function EssayPage({ essay, all, setEssay, scrollY, mobile, px }) {
             </div>
           </Reveal>
         )}
+
+        {/* Share */}
+        <Reveal>
+          <div style={{ marginTop:48, paddingTop:28, borderTop:`1px solid ${C.g200}`, display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+            <span className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:C.g400,marginRight:4 }}>Share</span>
+            {[
+              { label: "Twitter / X", fn: shareTwitter },
+              { label: "LinkedIn", fn: shareLinkedIn },
+              { label: copied ? "Copied!" : "Copy Link", fn: copyLink },
+            ].map(({ label, fn }) => (
+              <button key={label} onClick={fn}
+                style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",padding:"8px 14px",background:"white",color:C.g600,border:`1px solid ${C.g200}`,cursor:"pointer",transition:"all .2s" }}
+                onMouseOver={e=>{e.currentTarget.style.borderColor=C.navy;e.currentTarget.style.color=C.navy}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor=C.g200;e.currentTarget.style.color=C.g600}}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </Reveal>
       </div>
+
+      {/* Newsletter */}
+      <EmailCapture />
     </div>
   );
 }
@@ -918,52 +1013,92 @@ function IdeasPage({ mobile, px }) {
 // WORK PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 function WorkPage({ mobile, px }) {
+  const offerings = [
+    { title: "Speaking", icon: "◈", color: TC.Pressure, status: "Available", statusColor: "#4a7a5a", desc: "Keynotes on pressure, urgency, and internal configuration for leadership teams and conferences.", topics: ["Why burnout is a systems problem", "Urgency as a cultural default", "Reconfiguring how teams carry pressure"] },
+    { title: "Workshops", icon: "⊞", color: TC.Urgency, status: "In Development", statusColor: C.g400, desc: "Half-day and full-day workshops that move teams from awareness to practical reconfiguration.", topics: ["Identifying invisible internal rules", "Building latency back", "Margin by design"] },
+    { title: "Advisory", icon: "◇", color: TC.Reconfiguration, status: "Limited", statusColor: C.gold, desc: "Working directly with leaders operating under configurations that no longer serve them.", topics: ["One-on-one sessions", "Leadership team alignment", "Pressure assessment"] },
+  ];
+
   return (
-    <div style={{ maxWidth:1120, margin:"0 auto", padding:`56px ${px}` }}>
-      <Reveal style={{ marginBottom:56 }}>
-        <div style={{ width:36,height:2,background:C.gold,marginBottom:18 }}/>
-        <p className="ss" style={{ fontSize:11,fontWeight:700,letterSpacing:".2em",textTransform:"uppercase",color:C.gold,marginBottom:10 }}>Collaboration</p>
-        <h1 className="pf" style={{ fontSize:"clamp(32px,7vw,56px)",fontWeight:900,color:C.navy,lineHeight:1.05,marginBottom:20,letterSpacing:"-.02em" }}>Work With Me</h1>
-        <p className="ss" style={{ fontSize:16,lineHeight:1.85,color:C.g600,maxWidth:500 }}>The goal is never to energize — it's to help you see what you've been operating inside of.</p>
-      </Reveal>
-      <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "repeat(3,1fr)", gap: mobile ? 12 : 4, marginBottom:56 }}>
-        {[
-          {title:"Speaking",icon:"◈",status:"Available",sc:"#4a7a5a",desc:"Keynotes on pressure, urgency, and internal configuration for leadership teams and conferences.",topics:["Why burnout is a systems problem","Urgency as a cultural default","Reconfiguring how teams carry pressure"],cta:"Inquire About Speaking"},
-          {title:"Workshops",icon:"⊞",status:"In Development",sc:C.g400,desc:"Half-day and full-day workshops that move teams from awareness to practical reconfiguration.",topics:["Identifying invisible internal rules","Building latency back","Margin by design"],cta:"Join the Waitlist"},
-          {title:"Advisory",icon:"◇",status:"Limited",sc:C.gold,desc:"Working directly with leaders operating under configurations that no longer serve them.",topics:["One-on-one sessions","Leadership team alignment","Pressure assessment"],cta:"Start a Conversation"},
-        ].map((item,i) => (
-          <Reveal key={item.title} delay={i*.08}>
-            <div style={{ background:"white",borderTop:`3px solid ${Object.values(TC)[i]}`,padding: mobile ? "28px 24px" : "40px 36px",transition:"all .26s",height:"100%" }}
-              onMouseOver={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 32px rgba(0,0,0,.08)"}}
-              onMouseOut={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none"}}>
-              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20 }}>
-                <div style={{ fontSize:26,color:C.navy }}>{item.icon}</div>
-                <span className="ss" style={{ fontSize:10,letterSpacing:".1em",textTransform:"uppercase",fontWeight:700,color:item.sc,padding:"4px 10px",border:`1px solid ${item.sc}40` }}>{item.status}</span>
-              </div>
-              <h2 className="pf" style={{ fontSize: mobile ? 24 : 26,fontWeight:900,color:C.navy,marginBottom:14,letterSpacing:"-.01em" }}>{item.title}</h2>
-              <p className="ss" style={{ fontSize:14,lineHeight:1.82,color:C.g600,marginBottom:22 }}>{item.desc}</p>
-              <div style={{ marginBottom:28 }}>
-                {item.topics.map(t=>(
-                  <div key={t} style={{ display:"flex",gap:10,marginBottom:9 }}>
-                    <span style={{ color:C.gold,marginTop:4,fontSize:9,flexShrink:0 }}>▸</span>
-                    <span className="ss" style={{ fontSize:14,color:C.g600,lineHeight:1.55 }}>{t}</span>
-                  </div>
-                ))}
-              </div>
-              <button className="btn-d" style={{ width:"100%" }}>{item.cta}</button>
-            </div>
-          </Reveal>
-        ))}
-      </div>
-      <Reveal>
-        <div style={{ background:C.creamDark,padding: mobile ? "32px 28px" : "48px 52px",borderLeft:`4px solid ${C.gold}` }}>
-          <h3 className="pf" style={{ fontSize: mobile ? 22 : 26,fontWeight:700,color:C.navy,marginBottom:16 }}>A Note on How I Work</h3>
-          <p className="ss" style={{ fontSize:15,lineHeight:1.9,color:C.g600,maxWidth:600 }}>The framing is systems-based, not motivational. I work best with people who are already high-functioning and want to understand why the system they've built is costing more than it should.</p>
+    <div>
+      {/* Hero */}
+      <div style={{ background: C.navy, padding: mobile ? `72px ${px} 80px` : `96px ${px} 104px`, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(ellipse at 25% 60%, ${C.navyLight} 0%, transparent 65%)`, opacity: 0.85 }} />
+        <div style={{ maxWidth: 1120, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div style={{ maxWidth: 640 }}>
+            <div style={{ width: 36, height: 2, background: C.gold, marginBottom: 20 }} />
+            <p className="ss" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", color: C.gold, marginBottom: 14 }}>
+              Collaboration
+            </p>
+            <h1 className="pf" style={{ fontSize: mobile ? "clamp(32px,9vw,52px)" : "clamp(36px,5vw,60px)", fontWeight: 900, color: C.cream, lineHeight: 1.08, marginBottom: 20, letterSpacing: "-.02em" }}>
+              Work With Me
+            </h1>
+            <p className="lb" style={{ fontSize: mobile ? 16 : 19, lineHeight: 1.72, color: "rgba(244,239,230,.65)", fontStyle: "italic", marginBottom: 16 }}>
+              The goal is never to energize — it's to help you see what you've been operating inside of.
+            </p>
+            <p className="ss" style={{ fontSize: mobile ? 14 : 15, lineHeight: 1.85, color: "rgba(244,239,230,.48)", maxWidth: 520 }}>
+              The framing is systems-based, not motivational. I work best with people who are already high-functioning and want to understand why the system they've built is costing more than it should.
+            </p>
+          </div>
         </div>
-      </Reveal>
-      <Reveal style={{ marginTop:56 }}>
-        <InquiryForm mobile={mobile} />
-      </Reveal>
+      </div>
+
+      {/* Offerings */}
+      <div style={{ background: C.g100, padding: mobile ? `56px ${px}` : `72px ${px}` }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(3,1fr)", gap: mobile ? 16 : 6 }}>
+            {offerings.map((item, i) => (
+              <Reveal key={item.title} delay={i * .08}>
+                <div style={{ background: "white", borderTop: `3px solid ${item.color}`, padding: mobile ? "28px 24px" : "40px 36px", transition: "all .26s", height: "100%", display: "flex", flexDirection: "column" }}
+                  onMouseOver={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,.08)"; }}
+                  onMouseOut={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                    <div style={{ fontSize: 26, color: item.color }}>{item.icon}</div>
+                    <span className="ss" style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 700, color: item.statusColor, padding: "4px 10px", border: `1px solid ${item.statusColor}40`, background: `${item.statusColor}0d` }}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <h2 className="pf" style={{ fontSize: mobile ? 24 : 26, fontWeight: 900, color: C.navy, marginBottom: 12, letterSpacing: "-.01em" }}>{item.title}</h2>
+                  <p className="ss" style={{ fontSize: 14, lineHeight: 1.82, color: C.g600, marginBottom: 22 }}>{item.desc}</p>
+                  <div style={{ flex: 1 }}>
+                    {item.topics.map(t => (
+                      <div key={t} style={{ display: "flex", gap: 10, marginBottom: 9 }}>
+                        <span style={{ color: C.gold, marginTop: 4, fontSize: 9, flexShrink: 0 }}>▸</span>
+                        <span className="ss" style={{ fontSize: 14, color: C.g600, lineHeight: 1.55 }}>{t}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* How I work */}
+      <div style={{ background: C.creamDark, borderTop: `1px solid ${C.g200}`, borderBottom: `1px solid ${C.g200}`, padding: mobile ? `48px ${px}` : `56px ${px}` }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: mobile ? 36 : 52 }}>
+          {[
+            { label: "Systems-Based", body: "Not motivational. Not prescriptive. The work is understanding what's running and why — before doing anything about it." },
+            { label: "High-Functioning Clients", body: "I work best with people who are already capable and want to understand why their system is costing more than it should." },
+            { label: "No Performance Theater", body: "The goal isn't a framework you can explain. It's clarity about what's actually driving how you operate." },
+          ].map(({ label, body }) => (
+            <Reveal key={label}>
+              <div style={{ borderLeft: `2px solid ${C.gold}`, paddingLeft: 20 }}>
+                <h3 className="pf" style={{ fontSize: mobile ? 18 : 20, fontWeight: 700, color: C.navy, marginBottom: 10 }}>{label}</h3>
+                <p className="ss" style={{ fontSize: 14, lineHeight: 1.85, color: C.g600 }}>{body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+
+      {/* Inquiry form */}
+      <div style={{ background: C.g100, padding: mobile ? `56px ${px}` : `72px ${px}` }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+          <InquiryForm mobile={mobile} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -1209,39 +1344,3 @@ function AboutPage({ go, mobile, px }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SUBSCRIBE
-// ═══════════════════════════════════════════════════════════════════════════════
-function SubscribePage() {
-  const [email, setEmail] = useState("");
-  const [done, setDone] = useState(false);
-  return (
-    <div style={{ minHeight:"80vh", display:"flex", alignItems:"center", padding:"64px 24px" }}>
-      <div style={{ maxWidth:500, margin:"0 auto", width:"100%", textAlign:"center" }}>
-        <div style={{ width:36,height:2,background:C.gold,margin:"0 auto 24px" }}/>
-        <h1 className="pf" style={{ fontSize:"clamp(26px,7vw,42px)",fontWeight:900,color:C.navy,marginBottom:16,lineHeight:1.1,letterSpacing:"-.02em" }}>
-          Get new thinking<br/><em style={{ fontWeight:400,color:C.g600 }}>when it's released.</em>
-        </h1>
-        <p className="ss" style={{ fontSize:16,lineHeight:1.85,color:C.g600,marginBottom:36 }}>
-          No noise. No marketing language. When there's something worth reading, you'll get it.
-        </p>
-        {done ? (
-          <div style={{ padding:"32px 36px",background:C.creamDark,border:`1px solid ${C.g200}` }}>
-            <p className="pf" style={{ fontSize:22,color:C.navy,marginBottom:10,fontWeight:700 }}>You're in.</p>
-            <p className="ss" style={{ fontSize:15,color:C.g600 }}>New thinking and ideas will come to you directly.</p>
-          </div>
-        ) : (
-          <div>
-            <div style={{ display:"flex",gap:8,maxWidth:420,margin:"0 auto",flexWrap:"wrap" }}>
-              <input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="Your email address" style={{ flex:1,minWidth:200 }}/>
-              <button onClick={()=>email&&setDone(true)} style={{ fontFamily:"'Source Sans 3',sans-serif",fontSize:11,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",padding:"14px 22px",background:C.navy,color:C.cream,border:"none",cursor:"pointer",minHeight:48,whiteSpace:"nowrap" }}>
-                Subscribe
-              </button>
-            </div>
-            <p className="ss" style={{ fontSize:12,color:C.g400,marginTop:14 }}>No spam. Unsubscribe any time.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}

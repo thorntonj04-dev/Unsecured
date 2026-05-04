@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { saveAuditResult } from "./firebase";
+import { sendAuditResultEmail } from "./emailjs";
 import { LOCAL_ESSAYS } from "./essays";
 
 const C = {
@@ -211,6 +212,42 @@ const SECONDARY_READS = {
   Reconfiguration: "Baseline drift is also present. The gap between current settings and what the situation actually requires may be wider than it currently appears.",
 };
 
+// ─── PROFILE INTERACTIONS ─────────────────────────────────────────────────────
+const PROFILE_INTERACTIONS = {
+  "Pressure+Urgency": "When the endurance pattern and high-frequency urgency run together, they form a self-reinforcing loop: pressure builds, urgency fires, action follows, brief relief arrives — then the cycle resets. Endurance keeps you inside the loop; urgency keeps it spinning. Neither one questions whether the loop itself is necessary.",
+  "Pressure+Internal Rules": "When endurance and unexamined rules run together, the rules supply the justification for why the pressure has to be carried. 'This is what responsible people do.' 'I can't say no here.' The endurance provides the capacity to keep going; the rules provide the permission structure that makes stopping feel impossible.",
+  "Pressure+Reconfiguration": "When endurance and baseline drift run together, the system becomes very good at absorbing what would otherwise register as too much. The drift adjusts the reference point so the load feels normal. The endurance makes the adjusted baseline sustainable. Together, they make the problem invisible — functional on the outside, quietly depleted underneath.",
+  "Urgency+Pressure": "When high-frequency urgency and the endurance pattern run together, urgency supplies a constant stream of inputs that feel critical, and endurance provides the stamina to respond to all of them. The result is a high-output, high-cost system that looks like effectiveness but is operating well above its intended load.",
+  "Urgency+Internal Rules": "When urgency and unexamined rules run together, the rules are often what keep the urgency channel open. A rule that says 'I have to be available' means every incoming signal gets through automatically — urgency fires, the rule grants access, the response follows without evaluation. Addressing urgency alone won't close the port the rule created.",
+  "Urgency+Reconfiguration": "When high-frequency urgency and baseline drift run together, the elevated urgency state has often been running long enough to feel normal. The drift recalibrated around a system that's always reactive. What feels like 'just how I am' is actually a posture that was useful at some point and then became the permanent setting.",
+  "Internal Rules+Pressure": "When unexamined rules and endurance run together, the rules define what carrying your weight means — and the endurance ensures you keep meeting that standard regardless of cost. The rules set the threshold; the endurance ensures compliance. What looks like integrity from the outside can be invisible self-depletion from the inside.",
+  "Internal Rules+Urgency": "When unexamined rules and high-frequency urgency run together, the rules are often the mechanism that keeps urgency in authority. The rule says respond quickly; urgency provides the pressure to comply. The combination means the system rarely evaluates — it just obeys. The path to change runs through the rules, not just through managing the urgency.",
+  "Internal Rules+Reconfiguration": "When unexamined rules and baseline drift run together, you're likely dealing with configurations that have been running the longest and drifted furthest from conscious choice. The rules settled in early; the drift happened gradually around them. This pattern tends to be the most stable — which makes it the hardest to see clearly from the inside.",
+  "Reconfiguration+Pressure": "When baseline drift and endurance run together, the drift often explains why the endurance feels necessary. The reference point for 'normal' has shifted to a level that requires significant carrying capacity to sustain. The endurance isn't the root problem — the drifted baseline it's supporting is. Addressing the baseline is the more leveraged intervention.",
+  "Reconfiguration+Urgency": "When baseline drift and high-frequency urgency run together, the urgency has likely been absorbed into the baseline itself. What started as a response to genuine pressure has become the pace of life — so urgency no longer feels like an alarm, it just feels like the background. The urgency isn't experienced as exceptional anymore; it's experienced as normal.",
+  "Reconfiguration+Internal Rules": "When baseline drift and unexamined rules run together, the rules are often what caused the drift in the first place. Rules about availability, performance, and what's acceptable created the conditions that pushed the baseline over time. The drift is the outcome; the rules are the mechanism. This combination tends to respond well to visibility — not pressure to change, but honest inspection of what's actually running.",
+};
+
+// ─── NEXT STEPS ───────────────────────────────────────────────────────────────
+const NEXT_STEPS = {
+  Pressure: {
+    heading: "One Thing to Try This Week",
+    body: "Notice the next time you push through something instead of stopping. Don't try to change it — just pause for a moment and ask: what would it mean if I didn't push through here? You're not looking for an answer. You're just opening the question.",
+  },
+  Urgency: {
+    heading: "One Thing to Try This Week",
+    body: "Before you respond to the next thing that feels urgent, pause for ten seconds and ask: is this actually time-sensitive, or does it just feel that way? You don't have to decide differently. Just notice what urgency actually is — and what it isn't. That gap is where discernment lives.",
+  },
+  "Internal Rules": {
+    heading: "One Thing to Try This Week",
+    body: "Pick one recurring obligation — something you do automatically without deciding. Ask: did I consciously choose this, or did it just become expected? You don't have to change it. Just name it. Visibility is the first move, not action.",
+  },
+  Reconfiguration: {
+    heading: "One Thing to Try This Week",
+    body: "Think back to a period when you operated differently — less alert, more at ease. What was present then that isn't now? That gap is diagnostic data. It tells you something about what your current settings are compensating for — and whether the thing they were compensating for is still there.",
+  },
+};
+
 // Per-theme score interpretation (out of 20 max, 5 questions)
 const SCORE_READS = {
   Pressure: {
@@ -265,6 +302,7 @@ function computeProfiles(scores) {
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
+  const [copied, setCopied] = useState(false);
   const [step, setStep] = useState("intro");
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -317,6 +355,13 @@ export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
         profile,
         secondaryProfile,
       });
+      sendAuditResultEmail({
+        email: email.trim(),
+        name: name.trim(),
+        profile,
+        secondaryProfile,
+        scores,
+      }).catch(() => {});
     } catch (err) {
       console.warn("saveAuditResult failed:", err.message);
     } finally {
@@ -531,8 +576,11 @@ export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
         {/* Score grid — all 4 themes with tier descriptions */}
         <div style={{ background: C.creamDark, borderBottom: `1px solid ${C.g200}`, padding: mobile ? `32px ${px}` : `44px ${px}` }}>
           <div style={{ maxWidth: 760, margin: "0 auto" }}>
-            <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.g400, marginBottom: 18 }}>
+            <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.g400, marginBottom: 6 }}>
               Full Configuration Scan
+            </p>
+            <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 13, color: C.g600, marginBottom: 18, lineHeight: 1.6 }}>
+              Lower scores indicate patterns running most actively. The bar shows pattern depth — fuller means more embedded.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(4,1fr)", gap: mobile ? 10 : 14 }}>
               {Object.entries(scores)
@@ -540,7 +588,8 @@ export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
                 .map(([theme, score]) => {
                   const isPrimary = theme === profile;
                   const isSecondary = theme === secondaryProfile;
-                  const pct = Math.round((score / maxScore) * 100);
+                  // Bar shows embedded-ness: min score is 5 (5q × 1), max is 20 (5q × 4)
+                  const embPct = Math.round(((maxScore - score) / (maxScore - 5)) * 100);
                   return (
                     <div key={theme} style={{ padding: "16px 16px 18px", background: isPrimary ? `${TC[theme]}14` : isSecondary ? `${TC[theme]}08` : "white", border: `1.5px solid ${isPrimary ? TC[theme] : isSecondary ? TC[theme] + "55" : C.g200}`, position: "relative" }}>
                       {isPrimary && (
@@ -555,10 +604,11 @@ export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
                       )}
                       <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: TC[theme], marginBottom: 6 }}>{theme}</p>
                       <p style={{ fontFamily: "'Playfair Display',serif", fontSize: 26, fontWeight: 900, color: C.navy, lineHeight: 1, marginBottom: 2 }}>{score}</p>
-                      <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, color: C.g400, marginBottom: 10 }}>out of {maxScore}</p>
-                      {/* Score bar */}
+                      <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, color: C.g400, marginBottom: 8 }}>out of {maxScore}</p>
+                      {/* Pattern depth bar — fuller = more embedded/active */}
+                      <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: C.g400, marginBottom: 4 }}>Pattern Depth</p>
                       <div style={{ height: 3, background: C.g200, marginBottom: 10 }}>
-                        <div style={{ height: "100%", background: TC[theme], width: `${pct}%` }} />
+                        <div style={{ height: "100%", background: TC[theme], width: `${embPct}%` }} />
                       </div>
                       <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, lineHeight: 1.65, color: C.g600 }}>
                         {getScoreRead(theme, score)}
@@ -610,6 +660,20 @@ export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
             </div>
           )}
 
+          {/* Profile interaction */}
+          {sp && PROFILE_INTERACTIONS[`${profile}+${secondaryProfile}`] && (
+            <div style={{ marginBottom: 56 }}>
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.gold, marginBottom: 14 }}>
+                How These Patterns Work Together
+              </p>
+              <div style={{ padding: mobile ? "24px 22px" : "28px 36px", background: C.creamDark, borderLeft: `3px solid ${C.gold}` }}>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: mobile ? 14 : 15, lineHeight: 1.9, color: C.g800 }}>
+                  {PROFILE_INTERACTIONS[`${profile}+${secondaryProfile}`]}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Essay recommendations */}
           <div style={{ marginTop: sp ? 0 : 56 }}>
             <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.gold, marginBottom: 8 }}>
@@ -642,6 +706,23 @@ export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
               ))}
             </div>
           </div>
+
+          {/* Next step */}
+          {NEXT_STEPS[profile] && (
+            <div style={{ marginTop: 56, marginBottom: 0 }}>
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: C.gold, marginBottom: 8 }}>
+                {NEXT_STEPS[profile].heading}
+              </p>
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 13, color: C.g600, marginBottom: 20, lineHeight: 1.75 }}>
+                Based on your primary configuration — {profile}.
+              </p>
+              <div style={{ padding: mobile ? "24px 22px" : "28px 36px", background: "white", border: `1px solid ${C.g200}`, borderLeft: `4px solid ${p.color}` }}>
+                <p style={{ fontFamily: "'Libre Baskerville',serif", fontSize: mobile ? 15 : 16, lineHeight: 1.9, color: C.g800, margin: 0 }}>
+                  {NEXT_STEPS[profile].body}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Book CTA */}
           <div style={{ marginTop: 64, background: C.navy, padding: mobile ? "32px 28px" : "48px 52px", position: "relative", overflow: "hidden" }}>
@@ -676,6 +757,55 @@ export default function SystemAuditPage({ mobile, px, essays: passedEssays }) {
                   Retake Audit
                 </button>
               </div>
+
+              {/* Share results */}
+              <div style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,.1)" }}>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(244,239,230,.3)", marginBottom: 12 }}>
+                  Share your results
+                </p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {[
+                    {
+                      label: "Twitter / X",
+                      onClick: () => {
+                        const text = `I just ran the System Diagnostic from Unsecured by @JohnThornton — my primary profile is "${profile}." If you work inside pressure that never quite resolves, this audit is worth 5 minutes.`;
+                        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.origin + "/#audit")}`, "_blank", "noopener,noreferrer");
+                      },
+                    },
+                    {
+                      label: "LinkedIn",
+                      onClick: () => {
+                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin + "/#audit")}`, "_blank", "noopener,noreferrer");
+                      },
+                    },
+                    {
+                      label: copied ? "Copied!" : "Copy Link",
+                      onClick: () => {
+                        navigator.clipboard.writeText(window.location.origin + "/#audit").then(() => {
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2500);
+                        });
+                      },
+                    },
+                  ].map(({ label, onClick }) => (
+                    <button
+                      key={label}
+                      onClick={onClick}
+                      style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", padding: "9px 16px", background: "transparent", color: "rgba(244,239,230,.45)", border: "1px solid rgba(244,239,230,.15)", cursor: "pointer", transition: "all .2s" }}
+                      onMouseOver={e => { e.currentTarget.style.color = C.cream; e.currentTarget.style.borderColor = "rgba(244,239,230,.4)"; }}
+                      onMouseOut={e => { e.currentTarget.style.color = "rgba(244,239,230,.45)"; e.currentTarget.style.borderColor = "rgba(244,239,230,.15)"; }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, lineHeight: 1.7, color: "rgba(244,239,230,.4)", marginTop: 22, maxWidth: 480 }}>
+                This is a snapshot, not a verdict. Patterns can shift — and the shift itself is data. Come back in 30 days and retake the audit to see what's changed.
+              </p>
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 11, color: "rgba(244,239,230,.22)", marginTop: 6, letterSpacing: ".06em" }}>
+                Taken {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+              </p>
             </div>
           </div>
         </div>

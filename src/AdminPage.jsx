@@ -287,7 +287,7 @@ function Field({ label, note, required, children }) {
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────────────────────
 function Dashboard({ onSignOut }) {
-  const [activeTab, setActiveTab] = useState("essays"); // 'essays' | 'audits' | 'waitlist' | 'inquiries'
+  const [activeTab, setActiveTab] = useState("essays"); // 'essays' | 'audits' | 'waitlist' | 'inquiries' | 'subscribers'
   const [essays, setEssays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -300,6 +300,7 @@ function Dashboard({ onSignOut }) {
   const [audits, setAudits] = useState([]);
   const [waitlist, setWaitlist] = useState([]);
   const [inquiries, setInquiries] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
   const [collectionLoading, setCollectionLoading] = useState(false);
 
   useEffect(() => { loadEssays(); }, []);
@@ -318,6 +319,7 @@ function Dashboard({ onSignOut }) {
       if (name === "audits") setAudits(data);
       else if (name === "waitlist") setWaitlist(data);
       else if (name === "inquiries") setInquiries(data);
+      else if (name === "subscribers") setSubscribers(data);
     } catch (err) {
       showToast(`Failed to load ${name}: ${err.message}`);
     } finally {
@@ -331,6 +333,7 @@ function Dashboard({ onSignOut }) {
     if (tab === "audits" && audits.length === 0) loadCollection("audits");
     if (tab === "waitlist" && waitlist.length === 0) loadCollection("waitlist");
     if (tab === "inquiries" && inquiries.length === 0) loadCollection("inquiries");
+    if (tab === "subscribers" && subscribers.length === 0) loadCollection("subscribers");
   }
 
   function showToast(msg) {
@@ -418,7 +421,7 @@ function Dashboard({ onSignOut }) {
           </div>
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 0, overflowX: "auto", scrollbarWidth: "none" }}>
-            {[["Essays","essays"],["Audits","audits"],["Waitlist","waitlist"],["Inquiries","inquiries"]].map(([label, t]) => (
+            {[["Essays","essays"],["Audits","audits"],["Waitlist","waitlist"],["Inquiries","inquiries"],["Subscribers","subscribers"]].map(([label, t]) => (
               <button key={t} onClick={() => handleTabChange(t)} style={tabStyle(t)}>{label}</button>
             ))}
           </div>
@@ -653,6 +656,45 @@ function Dashboard({ onSignOut }) {
                   </tbody>
                 </table>
                 <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: C.g400, marginTop: 12 }}>{inquiries.length} inquir{inquiries.length !== 1 ? "ies" : "y"}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── SUBSCRIBERS TAB ── */}
+        {activeTab === "subscribers" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: C.navy }}>
+                Newsletter Subscribers
+              </h2>
+              <button onClick={() => loadCollection("subscribers")} style={{ ...outlineBtn, padding: "8px 16px", fontSize: 11 }}>
+                Refresh
+              </button>
+            </div>
+            {collectionLoading ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g600 }}>Loading…</p>
+            ) : subscribers.length === 0 ? (
+              <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 14, color: C.g400, padding: "40px 0", textAlign: "center" }}>No subscribers yet.</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Email</th>
+                      <th style={thStyle}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscribers.map(row => (
+                      <tr key={row.id} onMouseOver={e => e.currentTarget.style.background = C.g100} onMouseOut={e => e.currentTarget.style.background = "white"}>
+                        <td style={tdStyle}>{row.email || row.id || "—"}</td>
+                        <td style={{ ...tdStyle, color: C.g400, whiteSpace: "nowrap" }}>{formatTS(row.timestamp)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ fontFamily: "'Source Sans 3',sans-serif", fontSize: 12, color: C.g400, marginTop: 12 }}>{subscribers.length} subscriber{subscribers.length !== 1 ? "s" : ""}</p>
               </div>
             )}
           </div>

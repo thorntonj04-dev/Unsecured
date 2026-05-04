@@ -159,6 +159,17 @@ export async function addToWaitlist({ name, email }) {
   });
 }
 
+// ── SUBSCRIBE TO NEWSLETTER ───────────────────────────────────────────────────
+export async function subscribeNewsletter(email) {
+  const db = getDB();
+  if (!db) return;
+  const key = email.toLowerCase().trim();
+  await setDoc(doc(db, "subscribers", key), {
+    email: key,
+    timestamp: serverTimestamp(),
+  }, { merge: true });
+}
+
 // ── SUBMIT CORPORATE INQUIRY ──────────────────────────────────────────────────
 export async function submitInquiry({ name, email, organization, role, teamSize, interests, message }) {
   const db = getDB();
